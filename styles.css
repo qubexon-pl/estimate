@@ -61,6 +61,16 @@ button {
   font: inherit;
 }
 
+button.secondary {
+  background: #e6eefb;
+  color: #0f3265;
+  border: 1px solid #b8ccee;
+}
+
+button.secondary:hover {
+  background: #d6e4fb;
+}
+
 input,
 select {
   border: 1px solid #c7d2e5;
@@ -91,6 +101,40 @@ button:hover {
   margin-bottom: 0;
   color: #505a6b;
   font-size: 0.9rem;
+}
+
+.subsection {
+  margin-top: 1rem;
+  border-top: 1px solid #e6ecf7;
+  padding-top: 1rem;
+}
+
+.subsection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.subsection-header h3 {
+  margin: 0;
+}
+
+.source-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.source-item {
+  border: 1px solid #dbe2ee;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: #fafcff;
+}
+
+.source-item .grid {
+  align-items: end;
 }
 
 .result strong {

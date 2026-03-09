@@ -8,17 +8,19 @@ Simple estimator for project implementation effort across:
 ## Usage
 Open `index.html` in a browser and fill in:
 1. Number of sources and ingestion objects.
-2. Number + complexity of transformations.
+2. Number + complexity of transformations (or define transformation complexity by named data source).
 3. Gold layer objects, semantic complexity, and Power BI reports.
-4. Optional calibration rates (hours per artifact).
+4. Optional calibration rates (hours per artifact), plus documentation and UAT percentages.
 
 Click **Calculate PRG** to compute total PRG hours and a suggested team size.
 
 ## Estimation algorithm
 Total hours =
 - Ingestion hours
-- Transformation hours
+- Transformation hours (global values or by named source definitions)
 - Gold/BI hours
 - + 15% contingency
+- + Documentation overhead (%)
+- + UAT overhead (%)
 
 The model is intentionally simple and tunable. Improve it by periodically calibrating the 6 base rates against real project actuals.
