@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3-Layer Data Project Estimator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>3-Layer Architecture Effort Estimator</h1>
+      <p class="intro">
+        Estimate implementation hours for a Medallion-style architecture (ingestion,
+        transformation, and gold/semantic/reporting). Adjust the default calibration values if needed.
+      </p>
+
+      <section class="card">
+        <h2>1) Ingestion Layer</h2>
+        <div class="grid two">
+          <label>
+            Number of data sources
+            <input id="dataSources" type="number" min="0" value="4" />
+          </label>
+          <label>
+            Number of objects to ingest
+            <input id="ingestObjects" type="number" min="0" value="40" />
+          </label>
+          <label>
+            Source complexity
+            <select id="sourceComplexity">
+              <option value="1">Low</option>
+              <option value="1.5" selected>Medium</option>
+              <option value="2.2">High</option>
+            </select>
+          </label>
+          <label>
+            Data quality factor
+            <select id="qualityFactor">
+              <option value="1">Good</option>
+              <option value="1.2" selected>Average</option>
+              <option value="1.5">Poor</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2) Transformation Layer</h2>
+        <div class="grid two">
+          <label>
+            Number of transformations
+            <input id="transformCount" type="number" min="0" value="55" />
+          </label>
+          <label>
+            Transformation complexity
+            <select id="transformComplexity">
+              <option value="1">Low</option>
+              <option value="1.4" selected>Medium</option>
+              <option value="2">High</option>
+            </select>
+          </label>
+          <label>
+            Reusability/modularity level
+            <select id="reuseFactor">
+              <option value="1.1">Low reuse</option>
+              <option value="1" selected>Normal</option>
+              <option value="0.85">High reuse</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3) Gold + Semantic + Power BI</h2>
+        <div class="grid two">
+          <label>
+            Dimension objects
+            <input id="dimensionCount" type="number" min="0" value="15" />
+          </label>
+          <label>
+            Fact objects
+            <input id="factCount" type="number" min="0" value="8" />
+          </label>
+          <label>
+            Semantic model complexity
+            <select id="semanticComplexity">
+              <option value="1">Low</option>
+              <option value="1.6" selected>Medium</option>
+              <option value="2.4">High</option>
+            </select>
+          </label>
+          <label>
+            Number of Power BI reports
+            <input id="reportCount" type="number" min="0" value="6" />
+          </label>
+          <label>
+            Report complexity
+            <select id="reportComplexity">
+              <option value="1">Low</option>
+              <option value="1.5" selected>Medium</option>
+              <option value="2.3">High</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Calibration (Adjust Algorithm)</h2>
+        <div class="grid three">
+          <label>Hours / source<input id="hrsPerSource" type="number" min="0" step="0.1" value="6" /></label>
+          <label>Hours / ingested object<input id="hrsPerIngest" type="number" min="0" step="0.1" value="1.3" /></label>
+          <label>Hours / transformation<input id="hrsPerTransform" type="number" min="0" step="0.1" value="1.8" /></label>
+          <label>Hours / dimension<input id="hrsPerDimension" type="number" min="0" step="0.1" value="3" /></label>
+          <label>Hours / fact<input id="hrsPerFact" type="number" min="0" step="0.1" value="5" /></label>
+          <label>Hours / report<input id="hrsPerReport" type="number" min="0" step="0.1" value="8" /></label>
+        </div>
+        <p class="note">
+          Tip: Keep a history of actuals vs estimates and update these six rates every 3-5 projects.
+          This will improve predictability more than changing multipliers alone.
+        </p>
+      </section>
+
+      <section class="actions">
+        <button id="calculateBtn" type="button">Calculate PRG</button>
+      </section>
+
+      <section class="card result" aria-live="polite">
+        <h2>Estimation Result</h2>
+        <div class="grid two">
+          <div>
+            <p>Ingestion hours: <strong id="ingestionHours">0</strong></p>
+            <p>Transformation hours: <strong id="transformationHours">0</strong></p>
+            <p>Gold/BI hours: <strong id="goldHours">0</strong></p>
+          </div>
+          <div>
+            <p>Base implementation hours: <strong id="baseHours">0</strong></p>
+            <p>Risk/contingency (15%): <strong id="contingencyHours">0</strong></p>
+            <p>Total PRG hours: <strong id="totalHours">0</strong></p>
+          </div>
+        </div>
+
+        <hr />
+        <h3>Transfer to PRG Estimation</h3>
+        <div class="grid two">
+          <label>
+            PRG hours (auto-filled)
+            <input id="prgHours" type="number" min="0" step="0.1" readonly />
+          </label>
+          <label>
+            Delivery weeks (for planning)
+            <input id="deliveryWeeks" type="number" min="1" value="12" />
+          </label>
+        </div>
+        <p>Suggested team size: <strong id="teamSize">0</strong> FTE (assuming 30 productive hrs/week).</p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
