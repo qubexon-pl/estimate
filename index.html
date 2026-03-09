@@ -68,6 +68,19 @@
             </select>
           </label>
         </div>
+
+        <div class="subsection">
+          <div class="subsection-header">
+            <h3>Transformation by Data Source</h3>
+            <button id="addDataSourceBtn" type="button" class="secondary">+ Add data source</button>
+          </div>
+          <p class="note">
+            Define named data sources and expected transformation complexity for each source.
+            When at least one source is added, these definitions are used instead of the global
+            transformation count/complexity.
+          </p>
+          <div id="dataSourceTransforms" class="source-list"></div>
+        </div>
       </section>
 
       <section class="card">
@@ -113,6 +126,8 @@
           <label>Hours / dimension<input id="hrsPerDimension" type="number" min="0" step="0.1" value="3" /></label>
           <label>Hours / fact<input id="hrsPerFact" type="number" min="0" step="0.1" value="5" /></label>
           <label>Hours / report<input id="hrsPerReport" type="number" min="0" step="0.1" value="8" /></label>
+          <label>Documentation (%)<input id="documentationPct" type="number" min="0" step="0.1" value="10" /></label>
+          <label>UAT (%)<input id="uatPct" type="number" min="0" step="0.1" value="10" /></label>
         </div>
         <p class="note">
           Tip: Keep a history of actuals vs estimates and update these six rates every 3-5 projects.
@@ -135,6 +150,8 @@
           <div>
             <p>Base implementation hours: <strong id="baseHours">0</strong></p>
             <p>Risk/contingency (15%): <strong id="contingencyHours">0</strong></p>
+            <p>Documentation hours: <strong id="documentationHours">0</strong></p>
+            <p>UAT hours: <strong id="uatHours">0</strong></p>
             <p>Total PRG hours: <strong id="totalHours">0</strong></p>
           </div>
         </div>
