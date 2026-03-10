@@ -57,7 +57,8 @@ label {
 
 input,
 select,
-button {
+button,
+textarea {
   font: inherit;
 }
 
@@ -72,11 +73,16 @@ button.secondary:hover {
 }
 
 input,
-select {
+select,
+textarea {
   border: 1px solid #c7d2e5;
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
   background: #fff;
+}
+
+textarea {
+  resize: vertical;
 }
 
 button {
@@ -93,14 +99,15 @@ button:hover {
   background: #0550ae;
 }
 
-.actions {
-  margin-top: 1.2rem;
-}
-
 .note {
   margin-bottom: 0;
   color: #505a6b;
   font-size: 0.9rem;
+}
+
+.note.compact {
+  margin: 0;
+  align-self: end;
 }
 
 .subsection {

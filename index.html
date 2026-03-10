@@ -15,6 +15,21 @@
       </p>
 
       <section class="card">
+        <h2>Load Estimation from JSON</h2>
+        <div class="grid two upload-grid">
+          <label>
+            Upload estimation JSON
+            <input id="jsonUpload" type="file" accept="application/json,.json" />
+          </label>
+          <p class="note compact">
+            Uploading a file automatically pre-fills matching fields (including data source rows,
+            object counts, calibration rates, and assumptions when provided).
+          </p>
+        </div>
+        <p id="uploadStatus" class="note" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
         <h2>1) Ingestion Layer</h2>
         <div class="grid two">
           <label>
@@ -118,6 +133,14 @@
       </section>
 
       <section class="card">
+        <h2>Assumptions</h2>
+        <label>
+          Project assumptions / notes (optional)
+          <textarea id="assumptions" rows="4" placeholder="Optional assumptions loaded from JSON"></textarea>
+        </label>
+      </section>
+
+      <section class="card">
         <h2>Calibration (Adjust Algorithm)</h2>
         <div class="grid three">
           <label>Hours / source<input id="hrsPerSource" type="number" min="0" step="0.1" value="6" /></label>
@@ -133,10 +156,6 @@
           Tip: Keep a history of actuals vs estimates and update these six rates every 3-5 projects.
           This will improve predictability more than changing multipliers alone.
         </p>
-      </section>
-
-      <section class="actions">
-        <button id="calculateBtn" type="button">Calculate PRG</button>
       </section>
 
       <section class="card result" aria-live="polite">
