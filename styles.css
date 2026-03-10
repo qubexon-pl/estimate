@@ -1,149 +1,20 @@
 :root {
   color-scheme: light;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
 body {
-  margin: 0;
-  background: #f4f7fb;
-  color: #222;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 .container {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  max-width: 1024px;
 }
 
-h1,
-h2,
-h3 {
-  margin-top: 0;
-}
-
-.intro {
-  margin-top: -0.5rem;
-  color: #4c5463;
-}
-
-.card {
-  background: #fff;
-  border: 1px solid #dbe2ee;
-  border-radius: 12px;
-  padding: 1.1rem;
-  margin-top: 1rem;
-  box-shadow: 0 2px 9px rgba(19, 38, 76, 0.05);
-}
-
-.grid {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.grid.two {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.grid.three {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.95rem;
-  gap: 0.3rem;
-}
-
-input,
-select,
-button,
-textarea {
-  font: inherit;
-}
-
-button.secondary {
-  background: #e6eefb;
-  color: #0f3265;
-  border: 1px solid #b8ccee;
-}
-
-button.secondary:hover {
-  background: #d6e4fb;
-}
-
-input,
-select,
-textarea {
-  border: 1px solid #c7d2e5;
-  border-radius: 8px;
-  padding: 0.5rem 0.6rem;
-  background: #fff;
-}
-
-textarea {
-  resize: vertical;
-}
-
-button {
-  border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.1rem;
-  background: #0969da;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #0550ae;
-}
-
-.note {
-  margin-bottom: 0;
-  color: #505a6b;
-  font-size: 0.9rem;
-}
-
-.note.compact {
-  margin: 0;
-  align-self: end;
-}
-
-.subsection {
-  margin-top: 1rem;
-  border-top: 1px solid #e6ecf7;
-  padding-top: 1rem;
-}
-
-.subsection-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.subsection-header h3 {
-  margin: 0;
-}
-
-.source-list {
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 0.8rem;
+.card h2,
+.card h3 {
+  margin-bottom: 0.75rem;
 }
 
 .source-item {
-  border: 1px solid #dbe2ee;
-  border-radius: 10px;
-  padding: 0.8rem;
-  background: #fafcff;
-}
-
-.source-item .grid {
-  align-items: end;
-}
-
-.result strong {
-  font-size: 1.05rem;
+  border-color: var(--bs-border-color) !important;
 }
