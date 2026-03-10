@@ -1,9 +1,16 @@
-const getNum = (id) => Number(document.getElementById(id).value) || 0;
+const getElement = (id) => document.getElementById(id);
+const getNum = (id) => Number(getElement(id)?.value) || 0;
 const setText = (id, value) => {
-  document.getElementById(id).textContent = value.toFixed(1);
+  const target = getElement(id);
+  if (target) {
+    target.textContent = value.toFixed(1);
+  }
 };
 const setValue = (id, value) => {
-  document.getElementById(id).value = value.toFixed(1);
+  const target = getElement(id);
+  if (target) {
+    target.value = value.toFixed(1);
+  }
 };
 
 const FIELD_ALIASES = {
@@ -36,34 +43,36 @@ let sourceRowId = 0;
 function addSourceRow(name = '', transformCount = 0, complexity = '1.4') {
   sourceRowId += 1;
   const row = document.createElement('div');
-  row.className = 'source-item';
+  row.className = 'source-item border rounded p-3 bg-light';
   row.dataset.rowId = String(sourceRowId);
 
   const normalizedComplexity = normalizeComplexity(complexity, '1.4');
 
   row.innerHTML = `
-    <div class="grid two">
-      <label>
-        Data source name
-        <input type="text" class="source-name" placeholder="e.g. SAP" value="${name}" />
-      </label>
-      <label>
-        Transformations for this source
-        <input type="number" class="source-transform-count" min="0" value="${Number(transformCount) || 0}" />
-      </label>
-      <label>
-        Transformation complexity
-        <select class="source-complexity">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label mb-1">Data source name</label>
+        <input type="text" class="form-control source-name" placeholder="e.g. SAP" value="${name}" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Transformations for this source</label>
+        <input type="number" class="form-control source-transform-count" min="0" value="${Number(transformCount) || 0}" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Transformation complexity</label>
+        <select class="form-select source-complexity">
           <option value="1" ${normalizedComplexity === '1' ? 'selected' : ''}>Low</option>
           <option value="1.4" ${normalizedComplexity === '1.4' ? 'selected' : ''}>Medium</option>
           <option value="2" ${normalizedComplexity === '2' ? 'selected' : ''}>High</option>
         </select>
-      </label>
-      <button type="button" class="secondary remove-source-btn">Remove source</button>
+      </div>
+      <div class="col-md-2 d-grid">
+        <button type="button" class="btn btn-outline-secondary remove-source-btn">Remove source</button>
+      </div>
     </div>
   `;
 
-  row.querySelector('.remove-source-btn').addEventListener('click', () => {
+  row.querySelector('.remove-source-btn')?.addEventListener('click', () => {
     row.remove();
     calculateEstimate();
   });
@@ -72,21 +81,16 @@ function addSourceRow(name = '', transformCount = 0, complexity = '1.4') {
     el.addEventListener('input', calculateEstimate);
   });
 
-  document.getElementById('dataSourceTransforms').appendChild(row);
+  getElement('dataSourceTransforms')?.appendChild(row);
 }
 
 function normalizeComplexity(value, defaultValue) {
-  if (value == null) {
-    return defaultValue;
-  }
-
+  if (value == null) return defaultValue;
   const asText = String(value).trim().toLowerCase();
   if (asText === 'low') return '1';
   if (asText === 'medium') return defaultValue;
   if (asText === 'high') return defaultValue === '1.5' ? '2.3' : '2';
-  if (!Number.isNaN(Number(asText))) {
-    return String(Number(asText));
-  }
+  if (!Number.isNaN(Number(asText))) return String(Number(asText));
   return defaultValue;
 }
 
@@ -97,9 +101,7 @@ function getByPath(source, path) {
 function getFirstValue(source, paths) {
   for (const path of paths) {
     const value = getByPath(source, path);
-    if (value !== undefined && value !== null) {
-      return value;
-    }
+    if (value !== undefined && value !== null) return value;
   }
   return undefined;
 }
@@ -109,14 +111,10 @@ function applyJsonToForm(payload) {
 
   Object.entries(FIELD_ALIASES).forEach(([fieldId, paths]) => {
     const value = getFirstValue(payload, paths);
-    if (value === undefined) {
-      return;
-    }
+    if (value === undefined) return;
 
-    const input = document.getElementById(fieldId);
-    if (!input) {
-      return;
-    }
+    const input = getElement(fieldId);
+    if (!input) return;
 
     if (input.tagName === 'SELECT') {
       const normalized = normalizeComplexity(value, input.value);
@@ -132,7 +130,7 @@ function applyJsonToForm(payload) {
     appliedFields += 1;
   });
 
-  const sourceRowsContainer = document.getElementById('dataSourceTransforms');
+  const sourceRowsContainer = getElement('dataSourceTransforms');
   const sourceRows =
     getFirstValue(payload, [
       'dataSourceTransforms',
@@ -142,7 +140,7 @@ function applyJsonToForm(payload) {
       'sources',
     ]) || [];
 
-  if (Array.isArray(sourceRows)) {
+  if (sourceRowsContainer && Array.isArray(sourceRows)) {
     sourceRowsContainer.innerHTML = '';
     sourceRows.forEach((source) => {
       addSourceRow(
@@ -154,18 +152,18 @@ function applyJsonToForm(payload) {
   }
 
   calculateEstimate();
-  const status = document.getElementById('uploadStatus');
-  status.textContent = `Loaded JSON successfully. Updated ${appliedFields} field(s) and ${sourceRows.length} data source row(s).`;
+  const status = getElement('uploadStatus');
+  if (status) {
+    status.textContent = `Loaded JSON successfully. Updated ${appliedFields} field(s) and ${sourceRows.length} data source row(s).`;
+  }
 }
 
 function handleJsonUpload(event) {
   const file = event.target.files && event.target.files[0];
-  if (!file) {
-    return;
-  }
+  if (!file) return;
 
-  const status = document.getElementById('uploadStatus');
-  status.textContent = 'Reading JSON file...';
+  const status = getElement('uploadStatus');
+  if (status) status.textContent = 'Reading JSON file...';
 
   const reader = new FileReader();
   reader.onload = () => {
@@ -173,7 +171,7 @@ function handleJsonUpload(event) {
       const payload = JSON.parse(reader.result);
       applyJsonToForm(payload);
     } catch (error) {
-      status.textContent = `Unable to read JSON: ${error.message}`;
+      if (status) status.textContent = `Unable to read JSON: ${error.message}`;
     }
   };
   reader.readAsText(file);
@@ -181,13 +179,11 @@ function handleJsonUpload(event) {
 
 function getSourceTransformationHours(hrsPerTransform, reuseFactor) {
   const rows = Array.from(document.querySelectorAll('.source-item'));
-  if (rows.length === 0) {
-    return null;
-  }
+  if (rows.length === 0) return null;
 
   return rows.reduce((total, row) => {
-    const count = Number(row.querySelector('.source-transform-count').value) || 0;
-    const complexity = Number(row.querySelector('.source-complexity').value) || 1;
+    const count = Number(row.querySelector('.source-transform-count')?.value) || 0;
+    const complexity = Number(row.querySelector('.source-complexity')?.value) || 1;
     return total + count * hrsPerTransform * complexity * reuseFactor;
   }, 0);
 }
@@ -242,25 +238,36 @@ function calculateEstimate() {
   setText('documentationHours', documentationHours);
   setText('uatHours', uatHours);
   setText('totalHours', totalHours);
-
   setValue('prgHours', totalHours);
 
   const weeks = Math.max(1, getNum('deliveryWeeks'));
-  const teamSize = totalHours / (weeks * 30);
-  setText('teamSize', teamSize);
+  setText('teamSize', totalHours / (weeks * 30));
 }
 
-document.getElementById('deliveryWeeks').addEventListener('input', calculateEstimate);
-document.getElementById('addDataSourceBtn').addEventListener('click', () => {
-  addSourceRow();
-  calculateEstimate();
-});
-document.getElementById('jsonUpload').addEventListener('change', handleJsonUpload);
-
-document.querySelectorAll('input, select, textarea').forEach((el) => {
-  if (el.id !== 'deliveryWeeks' && el.id !== 'jsonUpload') {
-    el.addEventListener('input', calculateEstimate);
+function initEstimator() {
+  const requiredIds = ['deliveryWeeks', 'addDataSourceBtn', 'jsonUpload'];
+  if (requiredIds.some((id) => !getElement(id))) {
+    return;
   }
-});
 
-calculateEstimate();
+  getElement('deliveryWeeks').addEventListener('input', calculateEstimate);
+  getElement('addDataSourceBtn').addEventListener('click', () => {
+    addSourceRow();
+    calculateEstimate();
+  });
+  getElement('jsonUpload').addEventListener('change', handleJsonUpload);
+
+  document.querySelectorAll('input, select, textarea').forEach((el) => {
+    if (el.id !== 'deliveryWeeks' && el.id !== 'jsonUpload') {
+      el.addEventListener('input', calculateEstimate);
+    }
+  });
+
+  calculateEstimate();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initEstimator);
+} else {
+  initEstimator();
+}
