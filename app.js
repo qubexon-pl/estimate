@@ -26,6 +26,13 @@ function addRow(containerId, templateFn) {
   row.className = templateFn.className;
   row.innerHTML = templateFn.html;
   row.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', calculateEstimate));
+  const deleteBtn = row.querySelector('.row-delete-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      row.remove();
+      calculateEstimate();
+    });
+  }
   container.appendChild(row);
 }
 
@@ -38,7 +45,7 @@ function removeLastRow(containerId) {
 
 function addIngestionRow(source = '') {
   addRow('ingestionRows', {
-    className: 'table-row row-4 ingestion-row',
+    className: 'table-row table-row-with-delete ingestion-row',
     html: `
       <input class="ingestion-source-name" value="${source}" placeholder="source name" />
       <input class="ingestion-object-count" type="number" min="0" value="0" />
@@ -48,17 +55,19 @@ function addIngestionRow(source = '') {
         <option value="1.2" selected>Average (1.2)</option>
         <option value="1.5">Poor (1.5)</option>
       </select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete source">🗑</button>
     `,
   });
 }
 
 function addTransformRow(source = '') {
   addRow('transformRows', {
-    className: 'table-row row-3 transform-row',
+    className: 'table-row table-row-with-delete-3 transform-row',
     html: `
       <input class="transform-source-name" value="${source}" placeholder="source name" />
       <input class="transform-count" type="number" min="0" value="0" />
       <select class="transform-complexity">${complexityOptions('1.5')}</select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete source">🗑</button>
     `,
   });
 }
@@ -338,13 +347,11 @@ function initEstimator() {
     addIngestionRow();
     calculateEstimate();
   });
-  getElement('deleteIngestionBtn').addEventListener('click', () => removeLastRow('ingestionRows'));
 
   getElement('addTransformBtn').addEventListener('click', () => {
     addTransformRow();
     calculateEstimate();
   });
-  getElement('deleteTransformBtn').addEventListener('click', () => removeLastRow('transformRows'));
 
   getElement('addDimensionBtn').addEventListener('click', () => {
     addDimensionRow();
