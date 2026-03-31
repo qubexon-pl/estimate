@@ -132,6 +132,14 @@ label {
   font-weight: 600;
 }
 
+.icon-only-btn {
+  width: 2.5rem;
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .result-list p {
   margin-bottom: 0.55rem;
 }
