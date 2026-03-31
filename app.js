@@ -1,229 +1,145 @@
 const getElement = (id) => document.getElementById(id);
 const getNum = (id) => Number(getElement(id)?.value) || 0;
+
+const formatNum = (value) => value.toFixed(1);
 const setText = (id, value) => {
-  const target = getElement(id);
-  if (target) {
-    target.textContent = value.toFixed(1);
-  }
+  const el = getElement(id);
+  if (el) el.textContent = formatNum(value);
 };
 const setValue = (id, value) => {
-  const target = getElement(id);
-  if (target) {
-    target.value = value.toFixed(1);
-  }
+  const el = getElement(id);
+  if (el) el.value = formatNum(value);
 };
 
-const FIELD_ALIASES = {
-  dataSources: ['dataSources', 'ingestion.dataSources'],
-  ingestObjects: ['ingestObjects', 'objectsToIngest', 'ingestion.objects', 'ingestion.ingestObjects'],
-  sourceComplexity: ['sourceComplexity', 'ingestion.sourceComplexity'],
-  qualityFactor: ['qualityFactor', 'ingestion.qualityFactor'],
-  transformCount: ['transformCount', 'transformations', 'transformation.count'],
-  transformComplexity: ['transformComplexity', 'transformation.complexity'],
-  reuseFactor: ['reuseFactor', 'transformation.reuseFactor'],
-  dimensionCount: ['dimensionCount', 'gold.dimensionCount', 'gold.dimensions'],
-  factCount: ['factCount', 'gold.factCount', 'gold.facts'],
-  semanticComplexity: ['semanticComplexity', 'gold.semanticComplexity'],
-  reportCount: ['reportCount', 'gold.reportCount', 'powerBI.reportCount'],
-  reportComplexity: ['reportComplexity', 'gold.reportComplexity', 'powerBI.reportComplexity'],
-  hrsPerSource: ['hrsPerSource', 'calibration.hrsPerSource'],
-  hrsPerIngest: ['hrsPerIngest', 'calibration.hrsPerIngest'],
-  hrsPerTransform: ['hrsPerTransform', 'calibration.hrsPerTransform'],
-  hrsPerDimension: ['hrsPerDimension', 'calibration.hrsPerDimension'],
-  hrsPerFact: ['hrsPerFact', 'calibration.hrsPerFact'],
-  hrsPerReport: ['hrsPerReport', 'calibration.hrsPerReport'],
-  documentationPct: ['documentationPct', 'calibration.documentationPct'],
-  uatPct: ['uatPct', 'calibration.uatPct'],
-  deliveryWeeks: ['deliveryWeeks', 'planning.deliveryWeeks'],
-  assumptions: ['assumptions', 'notes', 'project.assumptions'],
-};
-
-let sourceRowId = 0;
-
-function addSourceRow(name = '', transformCount = 0, complexity = '1.4') {
-  sourceRowId += 1;
-  const row = document.createElement('div');
-  row.className = 'source-item border rounded p-3 bg-light';
-  row.dataset.rowId = String(sourceRowId);
-
-  const normalizedComplexity = normalizeComplexity(complexity, '1.4');
-
-  row.innerHTML = `
-    <div class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label mb-1">Data source name</label>
-        <input type="text" class="form-control source-name" placeholder="e.g. SAP" value="${name}" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label mb-1">Transformations for this source</label>
-        <input type="number" class="form-control source-transform-count" min="0" value="${Number(transformCount) || 0}" />
-      </div>
-      <div class="col-md-3">
-        <label class="form-label mb-1">Transformation complexity</label>
-        <select class="form-select source-complexity">
-          <option value="1" ${normalizedComplexity === '1' ? 'selected' : ''}>Low</option>
-          <option value="1.4" ${normalizedComplexity === '1.4' ? 'selected' : ''}>Medium</option>
-          <option value="2" ${normalizedComplexity === '2' ? 'selected' : ''}>High</option>
-        </select>
-      </div>
-      <div class="col-md-2 d-grid">
-        <button type="button" class="btn btn-outline-secondary remove-source-btn">Remove source</button>
-      </div>
-    </div>
+function complexityOptions(defaultValue = '1') {
+  return `
+    <option value="1" ${defaultValue === '1' ? 'selected' : ''}>Low (1.0)</option>
+    <option value="1.5" ${defaultValue === '1.5' ? 'selected' : ''}>Medium (1.5)</option>
+    <option value="2.2" ${defaultValue === '2.2' ? 'selected' : ''}>High (2.2)</option>
   `;
+}
 
-  row.querySelector('.remove-source-btn')?.addEventListener('click', () => {
-    row.remove();
-    calculateEstimate();
+function addRow(containerId, templateFn) {
+  const container = getElement(containerId);
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = templateFn.className;
+  row.innerHTML = templateFn.html;
+  row.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', calculateEstimate));
+  container.appendChild(row);
+}
+
+function addIngestionRow(source = '') {
+  addRow('ingestionRows', {
+    className: 'table-row row-4 ingestion-row',
+    html: `
+      <input class="ingestion-source-name" value="${source}" placeholder="source name" />
+      <input class="ingestion-object-count" type="number" min="0" value="0" />
+      <select class="ingestion-source-complexity">${complexityOptions('1.5')}</select>
+      <select class="ingestion-quality-factor">
+        <option value="1">Good (1.0)</option>
+        <option value="1.2" selected>Average (1.2)</option>
+        <option value="1.5">Poor (1.5)</option>
+      </select>
+    `,
   });
+}
 
-  row.querySelectorAll('input, select').forEach((el) => {
-    el.addEventListener('input', calculateEstimate);
+function addTransformRow(source = '') {
+  addRow('transformRows', {
+    className: 'table-row row-3 transform-row',
+    html: `
+      <input class="transform-source-name" value="${source}" placeholder="source name" />
+      <input class="transform-count" type="number" min="0" value="0" />
+      <select class="transform-complexity">${complexityOptions('1.5')}</select>
+    `,
   });
-
-  getElement('dataSourceTransforms')?.appendChild(row);
 }
 
-function normalizeComplexity(value, defaultValue) {
-  if (value == null) return defaultValue;
-  const asText = String(value).trim().toLowerCase();
-  if (asText === 'low') return '1';
-  if (asText === 'medium') return defaultValue;
-  if (asText === 'high') return defaultValue === '1.5' ? '2.3' : '2';
-  if (!Number.isNaN(Number(asText))) return String(Number(asText));
-  return defaultValue;
-}
-
-function getByPath(source, path) {
-  return path.split('.').reduce((current, key) => (current == null ? undefined : current[key]), source);
-}
-
-function getFirstValue(source, paths) {
-  for (const path of paths) {
-    const value = getByPath(source, path);
-    if (value !== undefined && value !== null) return value;
-  }
-  return undefined;
-}
-
-function applyJsonToForm(payload) {
-  let appliedFields = 0;
-
-  Object.entries(FIELD_ALIASES).forEach(([fieldId, paths]) => {
-    const value = getFirstValue(payload, paths);
-    if (value === undefined) return;
-
-    const input = getElement(fieldId);
-    if (!input) return;
-
-    if (input.tagName === 'SELECT') {
-      const normalized = normalizeComplexity(value, input.value);
-      const optionExists = Array.from(input.options).some((option) => option.value === normalized);
-      if (optionExists) {
-        input.value = normalized;
-        appliedFields += 1;
-      }
-      return;
-    }
-
-    input.value = value;
-    appliedFields += 1;
+function addDimensionRow() {
+  addRow('dimensionRows', {
+    className: 'table-row row-2 dimension-row',
+    html: `
+      <input class="dimension-count" type="number" min="0" value="0" />
+      <select class="dimension-complexity">${complexityOptions('1.5')}</select>
+    `,
   });
-
-  const sourceRowsContainer = getElement('dataSourceTransforms');
-  const sourceRows =
-    getFirstValue(payload, [
-      'dataSourceTransforms',
-      'transformationByDataSource',
-      'transformation.sources',
-      'dataSourcesDetails',
-      'sources',
-    ]) || [];
-
-  if (sourceRowsContainer && Array.isArray(sourceRows)) {
-    sourceRowsContainer.innerHTML = '';
-    sourceRows.forEach((source) => {
-      addSourceRow(
-        source.name || source.sourceName || '',
-        source.transformCount || source.transformations || 0,
-        source.complexity || source.transformComplexity || '1.4',
-      );
-    });
-  }
-
-  calculateEstimate();
-  const status = getElement('uploadStatus');
-  if (status) {
-    status.textContent = `Loaded JSON successfully. Updated ${appliedFields} field(s) and ${sourceRows.length} data source row(s).`;
-  }
 }
 
-function handleJsonUpload(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-
-  const status = getElement('uploadStatus');
-  if (status) status.textContent = 'Reading JSON file...';
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const payload = JSON.parse(reader.result);
-      applyJsonToForm(payload);
-    } catch (error) {
-      if (status) status.textContent = `Unable to read JSON: ${error.message}`;
-    }
-  };
-  reader.readAsText(file);
+function addFactRow() {
+  addRow('factRows', {
+    className: 'table-row row-2 fact-row',
+    html: `
+      <input class="fact-count" type="number" min="0" value="0" />
+      <select class="fact-complexity">${complexityOptions('1.5')}</select>
+    `,
+  });
 }
 
-function getSourceTransformationHours(hrsPerTransform, reuseFactor) {
-  const rows = Array.from(document.querySelectorAll('.source-item'));
-  if (rows.length === 0) return null;
+function addReportRow() {
+  addRow('reportRows', {
+    className: 'table-row row-3 report-row',
+    html: `
+      <input class="report-count" type="number" min="0" value="0" />
+      <input class="report-tabs" type="number" min="1" value="1" />
+      <select class="report-complexity">
+        <option value="1">Low (1.0)</option>
+        <option value="1.5" selected>Medium (1.5)</option>
+        <option value="2.3">High (2.3)</option>
+      </select>
+    `,
+  });
+}
 
-  return rows.reduce((total, row) => {
-    const count = Number(row.querySelector('.source-transform-count')?.value) || 0;
-    const complexity = Number(row.querySelector('.source-complexity')?.value) || 1;
-    return total + count * hrsPerTransform * complexity * reuseFactor;
-  }, 0);
+function rowNum(row, selector, fallback = 0) {
+  return Number(row.querySelector(selector)?.value) || fallback;
 }
 
 function calculateEstimate() {
-  const dataSources = getNum('dataSources');
-  const ingestObjects = getNum('ingestObjects');
-  const sourceComplexity = getNum('sourceComplexity');
-  const qualityFactor = getNum('qualityFactor');
-
-  const transformCount = getNum('transformCount');
-  const transformComplexity = getNum('transformComplexity');
-  const reuseFactor = getNum('reuseFactor');
-
-  const dimensionCount = getNum('dimensionCount');
-  const factCount = getNum('factCount');
-  const semanticComplexity = getNum('semanticComplexity');
-  const reportCount = getNum('reportCount');
-  const reportComplexity = getNum('reportComplexity');
-
   const hrsPerSource = getNum('hrsPerSource');
   const hrsPerIngest = getNum('hrsPerIngest');
   const hrsPerTransform = getNum('hrsPerTransform');
   const hrsPerDimension = getNum('hrsPerDimension');
   const hrsPerFact = getNum('hrsPerFact');
   const hrsPerReport = getNum('hrsPerReport');
+  const tabImpactPct = getNum('tabImpactPct') / 100;
   const documentationPct = getNum('documentationPct') / 100;
   const uatPct = getNum('uatPct') / 100;
 
-  const ingestionHours =
-    (dataSources * hrsPerSource + ingestObjects * hrsPerIngest) * sourceComplexity * qualityFactor;
+  const ingestionHours = Array.from(document.querySelectorAll('.ingestion-row')).reduce((sum, row) => {
+    const objects = rowNum(row, '.ingestion-object-count');
+    const sourceComplexity = rowNum(row, '.ingestion-source-complexity', 1);
+    const qualityFactor = rowNum(row, '.ingestion-quality-factor', 1);
+    return sum + (hrsPerSource + objects * hrsPerIngest) * sourceComplexity * qualityFactor;
+  }, 0);
 
-  const sourceTransformationHours = getSourceTransformationHours(hrsPerTransform, reuseFactor);
-  const transformationHours =
-    sourceTransformationHours ?? transformCount * hrsPerTransform * transformComplexity * reuseFactor;
+  const transformationHours = Array.from(document.querySelectorAll('.transform-row')).reduce((sum, row) => {
+    const transformations = rowNum(row, '.transform-count');
+    const complexity = rowNum(row, '.transform-complexity', 1);
+    return sum + transformations * hrsPerTransform * complexity;
+  }, 0);
 
-  const goldHours =
-    (dimensionCount * hrsPerDimension + factCount * hrsPerFact) * semanticComplexity +
-    reportCount * hrsPerReport * reportComplexity;
+  const dimensionHours = Array.from(document.querySelectorAll('.dimension-row')).reduce((sum, row) => {
+    const count = rowNum(row, '.dimension-count');
+    const complexity = rowNum(row, '.dimension-complexity', 1);
+    return sum + count * hrsPerDimension * complexity;
+  }, 0);
 
+  const factHours = Array.from(document.querySelectorAll('.fact-row')).reduce((sum, row) => {
+    const count = rowNum(row, '.fact-count');
+    const complexity = rowNum(row, '.fact-complexity', 1);
+    return sum + count * hrsPerFact * complexity;
+  }, 0);
+
+  const reportHours = Array.from(document.querySelectorAll('.report-row')).reduce((sum, row) => {
+    const count = rowNum(row, '.report-count');
+    const tabs = Math.max(1, rowNum(row, '.report-tabs', 1));
+    const complexity = rowNum(row, '.report-complexity', 1);
+    const tabMultiplier = 1 + Math.max(0, tabs - 1) * tabImpactPct;
+    return sum + count * hrsPerReport * complexity * tabMultiplier;
+  }, 0);
+
+  const goldHours = dimensionHours + factHours + reportHours;
   const baseHours = ingestionHours + transformationHours + goldHours;
   const contingencyHours = baseHours * 0.15;
   const documentationHours = baseHours * documentationPct;
@@ -244,25 +160,141 @@ function calculateEstimate() {
   setText('teamSize', totalHours / (weeks * 30));
 }
 
-function initEstimator() {
-  const requiredIds = ['deliveryWeeks', 'addDataSourceBtn', 'jsonUpload'];
-  if (requiredIds.some((id) => !getElement(id))) {
-    return;
+function applyJsonToForm(payload) {
+  const ingestionRows = Array.isArray(payload.ingestion?.sources) ? payload.ingestion.sources : [];
+  const transformRows = Array.isArray(payload.transformation?.sources) ? payload.transformation.sources : [];
+  const dimensionRows = Array.isArray(payload.gold?.dimensions) ? payload.gold.dimensions : [];
+  const factRows = Array.isArray(payload.gold?.facts) ? payload.gold.facts : [];
+  const reportRows = Array.isArray(payload.gold?.reports) ? payload.gold.reports : [];
+
+  getElement('ingestionRows').innerHTML = '';
+  getElement('transformRows').innerHTML = '';
+  getElement('dimensionRows').innerHTML = '';
+  getElement('factRows').innerHTML = '';
+  getElement('reportRows').innerHTML = '';
+
+  ingestionRows.forEach((row) => {
+    addIngestionRow(row.name || '');
+    const current = document.querySelector('#ingestionRows .ingestion-row:last-child');
+    if (!current) return;
+    current.querySelector('.ingestion-object-count').value = row.objects || 0;
+    current.querySelector('.ingestion-source-complexity').value = String(row.sourceComplexity || 1.5);
+    current.querySelector('.ingestion-quality-factor').value = String(row.qualityFactor || 1.2);
+  });
+
+  transformRows.forEach((row) => {
+    addTransformRow(row.name || '');
+    const current = document.querySelector('#transformRows .transform-row:last-child');
+    if (!current) return;
+    current.querySelector('.transform-count').value = row.transformations || 0;
+    current.querySelector('.transform-complexity').value = String(row.complexity || 1.5);
+  });
+
+  dimensionRows.forEach((row) => {
+    addDimensionRow();
+    const current = document.querySelector('#dimensionRows .dimension-row:last-child');
+    if (!current) return;
+    current.querySelector('.dimension-count').value = row.count || 0;
+    current.querySelector('.dimension-complexity').value = String(row.complexity || 1.5);
+  });
+
+  factRows.forEach((row) => {
+    addFactRow();
+    const current = document.querySelector('#factRows .fact-row:last-child');
+    if (!current) return;
+    current.querySelector('.fact-count').value = row.count || 0;
+    current.querySelector('.fact-complexity').value = String(row.complexity || 1.5);
+  });
+
+  reportRows.forEach((row) => {
+    addReportRow();
+    const current = document.querySelector('#reportRows .report-row:last-child');
+    if (!current) return;
+    current.querySelector('.report-count').value = row.count || 0;
+    current.querySelector('.report-tabs').value = row.tabs || 1;
+    current.querySelector('.report-complexity').value = String(row.complexity || 1.5);
+  });
+
+  if (payload.calibration) {
+    const calibrationFields = [
+      'hrsPerSource',
+      'hrsPerIngest',
+      'hrsPerTransform',
+      'hrsPerDimension',
+      'hrsPerFact',
+      'hrsPerReport',
+      'tabImpactPct',
+      'documentationPct',
+      'uatPct',
+    ];
+    calibrationFields.forEach((field) => {
+      if (payload.calibration[field] !== undefined) {
+        getElement(field).value = payload.calibration[field];
+      }
+    });
   }
 
-  getElement('deliveryWeeks').addEventListener('input', calculateEstimate);
-  getElement('addDataSourceBtn').addEventListener('click', () => {
-    addSourceRow();
+  getElement('ingestionAssumptions').value = payload.assumptions?.ingestion || '';
+  getElement('transformAssumptions').value = payload.assumptions?.transformation || '';
+  getElement('goldAssumptions').value = payload.assumptions?.gold || '';
+
+  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + reportRows.length;
+  getElement('uploadStatus').textContent = `Loaded JSON successfully. Added ${rowsLoaded} row(s).`;
+  calculateEstimate();
+}
+
+function handleJsonUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  getElement('uploadStatus').textContent = 'Reading JSON file...';
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      applyJsonToForm(payload);
+    } catch (error) {
+      getElement('uploadStatus').textContent = `Unable to read JSON: ${error.message}`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function initEstimator() {
+  getElement('addIngestionBtn').addEventListener('click', () => {
+    addIngestionRow();
     calculateEstimate();
   });
+  getElement('addTransformBtn').addEventListener('click', () => {
+    addTransformRow();
+    calculateEstimate();
+  });
+  getElement('addDimensionBtn').addEventListener('click', () => {
+    addDimensionRow();
+    calculateEstimate();
+  });
+  getElement('addFactBtn').addEventListener('click', () => {
+    addFactRow();
+    calculateEstimate();
+  });
+  getElement('addReportBtn').addEventListener('click', () => {
+    addReportRow();
+    calculateEstimate();
+  });
+
   getElement('jsonUpload').addEventListener('change', handleJsonUpload);
 
-  document.querySelectorAll('input, select, textarea').forEach((el) => {
-    if (el.id !== 'deliveryWeeks' && el.id !== 'jsonUpload') {
+  document.querySelectorAll('input,select,textarea').forEach((el) => {
+    if (el.id !== 'jsonUpload') {
       el.addEventListener('input', calculateEstimate);
     }
   });
 
+  addIngestionRow('Source A');
+  addTransformRow('Source A');
+  addDimensionRow();
+  addFactRow();
+  addReportRow();
   calculateEstimate();
 }
 
