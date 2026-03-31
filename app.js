@@ -29,6 +29,13 @@ function addRow(containerId, templateFn) {
   container.appendChild(row);
 }
 
+function removeLastRow(containerId) {
+  const container = getElement(containerId);
+  if (!container || !container.lastElementChild) return;
+  container.lastElementChild.remove();
+  calculateEstimate();
+}
+
 function addIngestionRow(source = '') {
   addRow('ingestionRows', {
     className: 'table-row row-4 ingestion-row',
@@ -148,6 +155,8 @@ function calculateEstimate() {
 
   setText('ingestionHours', ingestionHours);
   setText('transformationHours', transformationHours);
+  setText('dimensionHours', dimensionHours);
+  setText('factHours', factHours);
   setText('goldHours', goldHours);
   setText('baseHours', baseHours);
   setText('contingencyHours', contingencyHours);
@@ -158,6 +167,70 @@ function calculateEstimate() {
 
   const weeks = Math.max(1, getNum('deliveryWeeks'));
   setText('teamSize', totalHours / (weeks * 30));
+}
+
+function buildJsonPayload() {
+  return {
+    calibration: {
+      hrsPerSource: getNum('hrsPerSource'),
+      hrsPerIngest: getNum('hrsPerIngest'),
+      hrsPerTransform: getNum('hrsPerTransform'),
+      hrsPerDimension: getNum('hrsPerDimension'),
+      hrsPerFact: getNum('hrsPerFact'),
+      hrsPerReport: getNum('hrsPerReport'),
+      tabImpactPct: getNum('tabImpactPct'),
+      documentationPct: getNum('documentationPct'),
+      uatPct: getNum('uatPct'),
+    },
+    ingestion: {
+      sources: Array.from(document.querySelectorAll('.ingestion-row')).map((row) => ({
+        name: row.querySelector('.ingestion-source-name')?.value || '',
+        objects: rowNum(row, '.ingestion-object-count'),
+        sourceComplexity: rowNum(row, '.ingestion-source-complexity', 1.5),
+        qualityFactor: rowNum(row, '.ingestion-quality-factor', 1.2),
+      })),
+    },
+    transformation: {
+      sources: Array.from(document.querySelectorAll('.transform-row')).map((row) => ({
+        name: row.querySelector('.transform-source-name')?.value || '',
+        transformations: rowNum(row, '.transform-count'),
+        complexity: rowNum(row, '.transform-complexity', 1.5),
+      })),
+    },
+    gold: {
+      dimensions: Array.from(document.querySelectorAll('.dimension-row')).map((row) => ({
+        count: rowNum(row, '.dimension-count'),
+        complexity: rowNum(row, '.dimension-complexity', 1.5),
+      })),
+      facts: Array.from(document.querySelectorAll('.fact-row')).map((row) => ({
+        count: rowNum(row, '.fact-count'),
+        complexity: rowNum(row, '.fact-complexity', 1.5),
+      })),
+      reports: Array.from(document.querySelectorAll('.report-row')).map((row) => ({
+        count: rowNum(row, '.report-count'),
+        tabs: rowNum(row, '.report-tabs', 1),
+        complexity: rowNum(row, '.report-complexity', 1.5),
+      })),
+    },
+    assumptions: {
+      ingestion: getElement('ingestionAssumptions')?.value || '',
+      transformation: getElement('transformAssumptions')?.value || '',
+      gold: getElement('goldAssumptions')?.value || '',
+    },
+  };
+}
+
+function exportJson() {
+  const payload = buildJsonPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'estimation-export.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+  getElement('uploadStatus').textContent = 'Exported estimation JSON successfully.';
 }
 
 function applyJsonToForm(payload) {
@@ -265,24 +338,34 @@ function initEstimator() {
     addIngestionRow();
     calculateEstimate();
   });
+  getElement('deleteIngestionBtn').addEventListener('click', () => removeLastRow('ingestionRows'));
+
   getElement('addTransformBtn').addEventListener('click', () => {
     addTransformRow();
     calculateEstimate();
   });
+  getElement('deleteTransformBtn').addEventListener('click', () => removeLastRow('transformRows'));
+
   getElement('addDimensionBtn').addEventListener('click', () => {
     addDimensionRow();
     calculateEstimate();
   });
+  getElement('deleteDimensionBtn').addEventListener('click', () => removeLastRow('dimensionRows'));
+
   getElement('addFactBtn').addEventListener('click', () => {
     addFactRow();
     calculateEstimate();
   });
+  getElement('deleteFactBtn').addEventListener('click', () => removeLastRow('factRows'));
+
   getElement('addReportBtn').addEventListener('click', () => {
     addReportRow();
     calculateEstimate();
   });
+  getElement('deleteReportBtn').addEventListener('click', () => removeLastRow('reportRows'));
 
   getElement('jsonUpload').addEventListener('change', handleJsonUpload);
+  getElement('exportJsonBtn').addEventListener('click', exportJson);
 
   document.querySelectorAll('input,select,textarea').forEach((el) => {
     if (el.id !== 'jsonUpload') {
