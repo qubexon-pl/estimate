@@ -1,20 +1,161 @@
 :root {
   color-scheme: light;
+  --border: #000;
+  --bg: #e9e9e9;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-.container {
-  max-width: 1024px;
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 8px;
+  min-height: 100vh;
+  padding: 8px;
 }
 
-.card h2,
-.card h3 {
-  margin-bottom: 0.75rem;
+.panel {
+  background: var(--bg);
+  border: 4px solid var(--border);
+  padding: 14px;
 }
 
-.source-item {
-  border-color: var(--bs-border-color) !important;
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sidebar-section h2,
+.layer-block h2 {
+  font-size: 24px;
+  margin: 0 0 10px;
+}
+
+h1 {
+  margin: 0 0 14px;
+}
+
+.sidebar p {
+  margin: 4px 0;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+button {
+  border: 5px solid var(--border);
+  background: #fff;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+label,
+#uploadStatus {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+label input {
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  border: 1px solid #222;
+}
+
+.layer-block {
+  margin-bottom: 18px;
+}
+
+.layer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.multi-buttons > div {
+  display: flex;
+  gap: 10px;
+}
+
+.table-wrap {
+  border: 5px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.table-head,
+.table-row {
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px;
+  align-items: center;
+}
+
+.table-head {
+  font-size: 25px;
+}
+
+.table-row {
+  border-top: 1px solid #aaa;
+}
+
+.table-row input,
+.table-row select {
+  width: 100%;
+  padding: 6px;
+}
+
+.row-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.row-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.row-4 {
+  grid-template-columns: 1.2fr 1.2fr 1fr 1fr;
+}
+
+.table-body:empty::before {
+  content: 'No rows yet';
+  display: block;
+  padding: 10px 12px;
+  color: #555;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #222;
+  padding: 6px;
+}
+
+.calibration-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .table-head {
+    font-size: 16px;
+  }
 }

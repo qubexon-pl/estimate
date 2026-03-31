@@ -4,210 +4,128 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>3-Layer Data Project Estimator</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-      crossorigin="anonymous"
-    />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="bg-light">
-    <main class="container py-4 py-md-5">
-      <h1 class="mb-3">3-Layer Architecture Effort Estimator</h1>
-      <p class="lead text-secondary">
-        Estimate implementation hours for a Medallion-style architecture (ingestion,
-        transformation, and gold/semantic/reporting). Adjust the default calibration values if needed.
-      </p>
+  <body>
+    <main class="layout">
+      <aside class="sidebar panel">
+        <section class="sidebar-section">
+          <h2>Load Estimation from JSON</h2>
+          <input id="jsonUpload" type="file" accept="application/json,.json" />
+          <p id="uploadStatus" aria-live="polite"></p>
+        </section>
 
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">Load Estimation from JSON</h2>
-          <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-              <label class="form-label" for="jsonUpload">Upload estimation JSON</label>
-              <input id="jsonUpload" class="form-control" type="file" accept="application/json,.json" />
-            </div>
-            <div class="col-md-7">
-              <p class="text-secondary mb-0 small">
-                Uploading a file automatically pre-fills matching fields (including data source rows,
-                object counts, calibration rates, and assumptions when provided).
-              </p>
-            </div>
+        <section class="sidebar-section">
+          <h2>Calibration (Adjust Algorithm)</h2>
+          <div class="calibration-grid">
+            <label>Hours / source<input id="hrsPerSource" type="number" min="0" step="0.1" value="6" /></label>
+            <label>Hours / ingested object<input id="hrsPerIngest" type="number" min="0" step="0.1" value="1.3" /></label>
+            <label>Hours / transformation<input id="hrsPerTransform" type="number" min="0" step="0.1" value="1.8" /></label>
+            <label>Hours / dimension object<input id="hrsPerDimension" type="number" min="0" step="0.1" value="3" /></label>
+            <label>Hours / fact object<input id="hrsPerFact" type="number" min="0" step="0.1" value="5" /></label>
+            <label>Hours / report<input id="hrsPerReport" type="number" min="0" step="0.1" value="8" /></label>
+            <label>Per extra report tab (% impact)<input id="tabImpactPct" type="number" min="0" step="0.1" value="15" /></label>
+            <label>Documentation (%)<input id="documentationPct" type="number" min="0" step="0.1" value="10" /></label>
+            <label>UAT (%)<input id="uatPct" type="number" min="0" step="0.1" value="10" /></label>
           </div>
-          <p id="uploadStatus" class="text-secondary mt-2 mb-0 small" aria-live="polite"></p>
-        </div>
-      </section>
+        </section>
 
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">1) Ingestion Layer</h2>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label" for="dataSources">Number of data sources</label>
-              <input id="dataSources" class="form-control" type="number" min="0" value="4" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="ingestObjects">Number of objects to ingest</label>
-              <input id="ingestObjects" class="form-control" type="number" min="0" value="40" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="sourceComplexity">Source complexity</label>
-              <select id="sourceComplexity" class="form-select">
-                <option value="1">Low</option>
-                <option value="1.5" selected>Medium</option>
-                <option value="2.2">High</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="qualityFactor">Data quality factor</label>
-              <select id="qualityFactor" class="form-select">
-                <option value="1">Good</option>
-                <option value="1.2" selected>Average</option>
-                <option value="1.5">Poor</option>
-              </select>
-            </div>
+        <section class="sidebar-section">
+          <h2>Estimation Result</h2>
+          <p>Ingestion hours: <strong id="ingestionHours">0.0</strong></p>
+          <p>Transformation hours: <strong id="transformationHours">0.0</strong></p>
+          <p>Gold/BI hours: <strong id="goldHours">0.0</strong></p>
+          <p>Base implementation hours: <strong id="baseHours">0.0</strong></p>
+          <p>Risk/contingency (15%): <strong id="contingencyHours">0.0</strong></p>
+          <p>Documentation hours: <strong id="documentationHours">0.0</strong></p>
+          <p>UAT hours: <strong id="uatHours">0.0</strong></p>
+          <p>Total PRG hours: <strong id="totalHours">0.0</strong></p>
+        </section>
+
+        <section class="sidebar-section">
+          <h2>Transfer to PRG Estimation</h2>
+          <label>PRG hours (auto-filled)<input id="prgHours" type="number" min="0" step="0.1" readonly /></label>
+          <label>Delivery weeks<input id="deliveryWeeks" type="number" min="1" value="12" /></label>
+          <p>Suggested team size: <strong id="teamSize">0.0</strong> FTE</p>
+        </section>
+      </aside>
+
+      <section class="content panel">
+        <h1>3-Layer Architecture Effort Estimator</h1>
+
+        <section class="layer-block">
+          <div class="layer-heading">
+            <h2>1) Ingestion Layer</h2>
+            <button id="addIngestionBtn" type="button">add source</button>
           </div>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">2) Transformation Layer</h2>
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label" for="transformCount">Number of transformations</label>
-              <input id="transformCount" class="form-control" type="number" min="0" value="55" />
+          <div class="table-wrap">
+            <div class="table-head row-4">
+              <span>Source name</span>
+              <span>Number of objects to ingest</span>
+              <span>Source complexity</span>
+              <span>Data quality factor</span>
             </div>
-            <div class="col-md-4">
-              <label class="form-label" for="transformComplexity">Transformation complexity</label>
-              <select id="transformComplexity" class="form-select">
-                <option value="1">Low</option>
-                <option value="1.4" selected>Medium</option>
-                <option value="2">High</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label" for="reuseFactor">Reusability/modularity level</label>
-              <select id="reuseFactor" class="form-select">
-                <option value="1.1">Low reuse</option>
-                <option value="1" selected>Normal</option>
-                <option value="0.85">High reuse</option>
-              </select>
-            </div>
+            <div id="ingestionRows" class="table-body"></div>
           </div>
+          <h3>Assumptions</h3>
+          <textarea id="ingestionAssumptions" rows="2" placeholder="Optional assumptions for ingestion"></textarea>
+        </section>
 
-          <div class="border-top mt-4 pt-3">
-            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-              <h3 class="h5 mb-0">Transformation by Data Source</h3>
-              <button id="addDataSourceBtn" type="button" class="btn btn-outline-primary btn-sm">+ Add data source</button>
-            </div>
-            <p class="text-secondary mt-2 mb-2 small">
-              Define named data sources and expected transformation complexity for each source.
-              When at least one source is added, these definitions are used instead of the global
-              transformation count/complexity.
-            </p>
-            <div id="dataSourceTransforms" class="d-grid gap-2"></div>
+        <section class="layer-block">
+          <div class="layer-heading">
+            <h2>2) Transformation Layer</h2>
+            <button id="addTransformBtn" type="button">add source</button>
           </div>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">3) Gold + Semantic + Power BI</h2>
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label" for="dimensionCount">Dimension objects</label>
-              <input id="dimensionCount" class="form-control" type="number" min="0" value="15" />
+          <div class="table-wrap">
+            <div class="table-head row-3">
+              <span>Data source name</span>
+              <span>Transformations for this source</span>
+              <span>Transformation complexity</span>
             </div>
-            <div class="col-md-4">
-              <label class="form-label" for="factCount">Fact objects</label>
-              <input id="factCount" class="form-control" type="number" min="0" value="8" />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label" for="semanticComplexity">Semantic model complexity</label>
-              <select id="semanticComplexity" class="form-select">
-                <option value="1">Low</option>
-                <option value="1.6" selected>Medium</option>
-                <option value="2.4">High</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="reportCount">Number of Power BI reports</label>
-              <input id="reportCount" class="form-control" type="number" min="0" value="6" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="reportComplexity">Report complexity</label>
-              <select id="reportComplexity" class="form-select">
-                <option value="1">Low</option>
-                <option value="1.5" selected>Medium</option>
-                <option value="2.3">High</option>
-              </select>
-            </div>
+            <div id="transformRows" class="table-body"></div>
           </div>
-        </div>
-      </section>
+          <h3>Assumptions</h3>
+          <textarea id="transformAssumptions" rows="2" placeholder="Optional assumptions for transformation"></textarea>
+        </section>
 
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">Assumptions</h2>
-          <label class="form-label" for="assumptions">Project assumptions / notes (optional)</label>
-          <textarea id="assumptions" class="form-control" rows="4" placeholder="Optional assumptions loaded from JSON"></textarea>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h4">Calibration (Adjust Algorithm)</h2>
-          <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">Hours / source<input id="hrsPerSource" class="form-control" type="number" min="0" step="0.1" value="6" /></label></div>
-            <div class="col-md-4"><label class="form-label">Hours / ingested object<input id="hrsPerIngest" class="form-control" type="number" min="0" step="0.1" value="1.3" /></label></div>
-            <div class="col-md-4"><label class="form-label">Hours / transformation<input id="hrsPerTransform" class="form-control" type="number" min="0" step="0.1" value="1.8" /></label></div>
-            <div class="col-md-4"><label class="form-label">Hours / dimension<input id="hrsPerDimension" class="form-control" type="number" min="0" step="0.1" value="3" /></label></div>
-            <div class="col-md-4"><label class="form-label">Hours / fact<input id="hrsPerFact" class="form-control" type="number" min="0" step="0.1" value="5" /></label></div>
-            <div class="col-md-4"><label class="form-label">Hours / report<input id="hrsPerReport" class="form-control" type="number" min="0" step="0.1" value="8" /></label></div>
-            <div class="col-md-6"><label class="form-label">Documentation (%)<input id="documentationPct" class="form-control" type="number" min="0" step="0.1" value="10" /></label></div>
-            <div class="col-md-6"><label class="form-label">UAT (%)<input id="uatPct" class="form-control" type="number" min="0" step="0.1" value="10" /></label></div>
-          </div>
-          <p class="text-secondary mt-3 mb-0 small">
-            Tip: Keep a history of actuals vs estimates and update these six rates every 3-5 projects.
-            This will improve predictability more than changing multipliers alone.
-          </p>
-        </div>
-      </section>
-
-      <section class="card shadow-sm mb-3" aria-live="polite">
-        <div class="card-body">
-          <h2 class="h4">Estimation Result</h2>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <p class="mb-1">Ingestion hours: <strong id="ingestionHours">0</strong></p>
-              <p class="mb-1">Transformation hours: <strong id="transformationHours">0</strong></p>
-              <p class="mb-0">Gold/BI hours: <strong id="goldHours">0</strong></p>
-            </div>
-            <div class="col-md-6">
-              <p class="mb-1">Base implementation hours: <strong id="baseHours">0</strong></p>
-              <p class="mb-1">Risk/contingency (15%): <strong id="contingencyHours">0</strong></p>
-              <p class="mb-1">Documentation hours: <strong id="documentationHours">0</strong></p>
-              <p class="mb-1">UAT hours: <strong id="uatHours">0</strong></p>
-              <p class="mb-0">Total PRG hours: <strong id="totalHours">0</strong></p>
+        <section class="layer-block">
+          <div class="layer-heading multi-buttons">
+            <h2>3) Gold + Semantic + Power BI</h2>
+            <div>
+              <button id="addDimensionBtn" type="button">add dims</button>
+              <button id="addFactBtn" type="button">add facts</button>
+              <button id="addReportBtn" type="button">add reports</button>
             </div>
           </div>
 
-          <hr />
-          <h3 class="h5">Transfer to PRG Estimation</h3>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label" for="prgHours">PRG hours (auto-filled)</label>
-              <input id="prgHours" class="form-control" type="number" min="0" step="0.1" readonly />
+          <div class="table-wrap">
+            <div class="table-head row-2">
+              <span>Dimension objects number</span>
+              <span>Logic complexity</span>
             </div>
-            <div class="col-md-6">
-              <label class="form-label" for="deliveryWeeks">Delivery weeks (for planning)</label>
-              <input id="deliveryWeeks" class="form-control" type="number" min="1" value="12" />
-            </div>
+            <div id="dimensionRows" class="table-body"></div>
           </div>
-          <p class="mt-3 mb-0">Suggested team size: <strong id="teamSize">0</strong> FTE (assuming 30 productive hrs/week).</p>
-        </div>
+
+          <div class="table-wrap">
+            <div class="table-head row-2">
+              <span>Fact objects number</span>
+              <span>Logic complexity</span>
+            </div>
+            <div id="factRows" class="table-body"></div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-head row-3">
+              <span>Number of Power BI reports</span>
+              <span>Number of tabs</span>
+              <span>Report complexity</span>
+            </div>
+            <div id="reportRows" class="table-body"></div>
+          </div>
+
+          <h3>Assumptions</h3>
+          <textarea id="goldAssumptions" rows="2" placeholder="Optional assumptions for gold/semantic/reporting"></textarea>
+        </section>
       </section>
     </main>
 
