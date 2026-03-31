@@ -36,13 +36,6 @@ function addRow(containerId, templateFn) {
   container.appendChild(row);
 }
 
-function removeLastRow(containerId) {
-  const container = getElement(containerId);
-  if (!container || !container.lastElementChild) return;
-  container.lastElementChild.remove();
-  calculateEstimate();
-}
-
 function addIngestionRow(source = '') {
   addRow('ingestionRows', {
     className: 'table-row table-row-with-delete ingestion-row',
@@ -74,27 +67,29 @@ function addTransformRow(source = '') {
 
 function addDimensionRow() {
   addRow('dimensionRows', {
-    className: 'table-row row-2 dimension-row',
+    className: 'table-row table-row-with-delete-2 dimension-row',
     html: `
       <input class="dimension-count" type="number" min="0" value="0" />
       <select class="dimension-complexity">${complexityOptions('1.5')}</select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete dimension row">🗑</button>
     `,
   });
 }
 
 function addFactRow() {
   addRow('factRows', {
-    className: 'table-row row-2 fact-row',
+    className: 'table-row table-row-with-delete-2 fact-row',
     html: `
       <input class="fact-count" type="number" min="0" value="0" />
       <select class="fact-complexity">${complexityOptions('1.5')}</select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete fact row">🗑</button>
     `,
   });
 }
 
 function addReportRow() {
   addRow('reportRows', {
-    className: 'table-row row-3 report-row',
+    className: 'table-row table-row-with-delete-3 report-row',
     html: `
       <input class="report-count" type="number" min="0" value="0" />
       <input class="report-tabs" type="number" min="1" value="1" />
@@ -103,6 +98,7 @@ function addReportRow() {
         <option value="1.5" selected>Medium (1.5)</option>
         <option value="2.3">High (2.3)</option>
       </select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete report row">🗑</button>
     `,
   });
 }
@@ -357,19 +353,16 @@ function initEstimator() {
     addDimensionRow();
     calculateEstimate();
   });
-  getElement('deleteDimensionBtn').addEventListener('click', () => removeLastRow('dimensionRows'));
 
   getElement('addFactBtn').addEventListener('click', () => {
     addFactRow();
     calculateEstimate();
   });
-  getElement('deleteFactBtn').addEventListener('click', () => removeLastRow('factRows'));
 
   getElement('addReportBtn').addEventListener('click', () => {
     addReportRow();
     calculateEstimate();
   });
-  getElement('deleteReportBtn').addEventListener('click', () => removeLastRow('reportRows'));
 
   getElement('jsonUpload').addEventListener('change', handleJsonUpload);
   getElement('exportJsonBtn').addEventListener('click', exportJson);

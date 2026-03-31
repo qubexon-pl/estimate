@@ -99,6 +99,10 @@ body {
   grid-template-columns: 1.1fr 1fr 1fr 0.3fr;
 }
 
+.table-row-with-delete-2 {
+  grid-template-columns: 1fr 1fr 0.3fr;
+}
+
 .table-row input,
 .table-row select,
 .table-row textarea {
@@ -196,7 +200,8 @@ label {
   .row-3,
   .row-2,
   .table-row-with-delete,
-  .table-row-with-delete-3 {
+  .table-row-with-delete-3,
+  .table-row-with-delete-2 {
     grid-template-columns: 1fr;
   }
 
