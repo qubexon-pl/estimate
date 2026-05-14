@@ -1,12 +1,8 @@
-:root {
-  color-scheme: dark;
-}
-
 * { box-sizing: border-box; }
 body { margin: 0; }
 .app-shell { max-width: 1800px; }
 .hero-card {
-  background: linear-gradient(120deg, #1f4c6e, #2a9fd6);
+  background: linear-gradient(120deg, #2c3e50, #18bc9c);
   border-radius: 0.6rem;
   padding: 1.5rem;
 }
@@ -17,7 +13,7 @@ body { margin: 0; }
 .action-stack { display:flex; flex-direction:column; align-items:flex-end; gap:.45rem; }
 .table-wrap { border: 1px solid var(--bs-border-color); border-radius: .6rem; overflow:hidden; margin-bottom:.85rem; }
 .table-head,.table-row { display:grid; gap:.65rem; padding:.75rem 1rem; align-items:center; }
-.table-head { font-size:.82rem; font-weight:600; text-transform:uppercase; background: rgba(255,255,255,.03); border-bottom:1px solid var(--bs-border-color); }
+.table-head { font-size:.82rem; font-weight:600; text-transform:uppercase; background: rgba(44,62,80,.06); border-bottom:1px solid var(--bs-border-color); }
 .table-row { border-top:1px solid var(--bs-border-color); }
 .table-row-with-delete { grid-template-columns: 1.2fr 1.2fr 1fr 1fr .3fr; }
 .table-row-with-delete-3 { grid-template-columns: 1.1fr 1fr 1fr .3fr; }
