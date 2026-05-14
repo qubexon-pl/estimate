@@ -40,10 +40,10 @@ function addIngestionRow(source = '') {
   addRow('ingestionRows', {
     className: 'table-row table-row-with-delete ingestion-row',
     html: `
-      <input class="ingestion-source-name" value="${source}" placeholder="source name" />
-      <input class="ingestion-object-count" type="number" min="0" value="0" />
-      <select class="ingestion-source-complexity">${complexityOptions('1.5')}</select>
-      <select class="ingestion-quality-factor">
+      <input class="form-control ingestion-source-name" value="${source}" placeholder="source name" />
+      <input class="form-control ingestion-object-count" type="number" min="0" value="0" />
+      <select class="form-select ingestion-source-complexity">${complexityOptions('1.5')}</select>
+      <select class="form-select ingestion-quality-factor">
         <option value="1">Good (1.0)</option>
         <option value="1.2" selected>Average (1.2)</option>
         <option value="1.5">Poor (1.5)</option>
@@ -57,9 +57,9 @@ function addTransformRow(source = '') {
   addRow('transformRows', {
     className: 'table-row table-row-with-delete-3 transform-row',
     html: `
-      <input class="transform-source-name" value="${source}" placeholder="source name" />
-      <input class="transform-count" type="number" min="0" value="0" />
-      <select class="transform-complexity">${complexityOptions('1.5')}</select>
+      <input class="form-control transform-source-name" value="${source}" placeholder="source name" />
+      <input class="form-control transform-count" type="number" min="0" value="0" />
+      <select class="form-select transform-complexity">${complexityOptions('1.5')}</select>
       <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete source">🗑</button>
     `,
   });
@@ -69,8 +69,8 @@ function addDimensionRow() {
   addRow('dimensionRows', {
     className: 'table-row table-row-with-delete-2 dimension-row',
     html: `
-      <input class="dimension-count" type="number" min="0" value="0" />
-      <select class="dimension-complexity">${complexityOptions('1.5')}</select>
+      <input class="form-control dimension-count" type="number" min="0" value="0" />
+      <select class="form-select dimension-complexity">${complexityOptions('1.5')}</select>
       <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete dimension row">🗑</button>
     `,
   });
@@ -80,8 +80,8 @@ function addFactRow() {
   addRow('factRows', {
     className: 'table-row table-row-with-delete-2 fact-row',
     html: `
-      <input class="fact-count" type="number" min="0" value="0" />
-      <select class="fact-complexity">${complexityOptions('1.5')}</select>
+      <input class="form-control fact-count" type="number" min="0" value="0" />
+      <select class="form-select fact-complexity">${complexityOptions('1.5')}</select>
       <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete fact row">🗑</button>
     `,
   });
@@ -91,9 +91,9 @@ function addReportRow() {
   addRow('reportRows', {
     className: 'table-row table-row-with-delete-3 report-row',
     html: `
-      <input class="report-count" type="number" min="0" value="0" />
-      <input class="report-tabs" type="number" min="1" value="1" />
-      <select class="report-complexity">
+      <input class="form-control report-count" type="number" min="0" value="0" />
+      <input class="form-control report-tabs" type="number" min="1" value="1" />
+      <select class="form-select report-complexity">
         <option value="1">Low (1.0)</option>
         <option value="1.5" selected>Medium (1.5)</option>
         <option value="2.3">High (2.3)</option>
@@ -108,10 +108,10 @@ function addWorkPackageRow(data = {}) {
   addRow('workPackageRows', {
     className: 'table-row table-row-with-delete workpackage-row',
     html: `
-      <input class="wp-name" value="${data.name || ''}" placeholder="e.g. Data model design" />
-      <input class="wp-description" value="${data.description || ''}" placeholder="what is delivered" />
-      <input class="wp-owner" value="${data.owner || ''}" placeholder="e.g. Data Engineer" />
-      <input class="wp-hours" type="number" min="0" value="${data.hours || 0}" />
+      <input class="form-control wp-name" value="${data.name || ''}" placeholder="e.g. Data model design" />
+      <input class="form-control wp-description" value="${data.description || ''}" placeholder="what is delivered" />
+      <input class="form-control wp-owner" value="${data.owner || ''}" placeholder="e.g. Data Engineer" />
+      <input class="form-control wp-hours" type="number" min="0" value="${data.hours || 0}" />
       <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete work package row">🗑</button>
     `,
   });
