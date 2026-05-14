@@ -103,6 +103,37 @@ function addReportRow() {
   });
 }
 
+
+function addWorkPackageRow(data = {}) {
+  addRow('workPackageRows', {
+    className: 'table-row table-row-with-delete workpackage-row',
+    html: `
+      <input class="wp-name" value="${data.name || ''}" placeholder="e.g. Data model design" />
+      <input class="wp-description" value="${data.description || ''}" placeholder="what is delivered" />
+      <input class="wp-owner" value="${data.owner || ''}" placeholder="e.g. Data Engineer" />
+      <input class="wp-hours" type="number" min="0" value="${data.hours || 0}" />
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete work package row">🗑</button>
+    `,
+  });
+}
+
+function generateAssumptions(payload, totalHours) {
+  const ingestionSources = payload.ingestion.sources.length;
+  const transformSources = payload.transformation.sources.length;
+  const totalReports = payload.gold.reports.reduce((s,r)=>s+(Number(r.count)||0),0);
+  const totalTabs = payload.gold.reports.reduce((s,r)=>s+(Number(r.tabs)||0),0);
+  const wpCount = payload.workPackages.length;
+  return [
+    `Estimate covers ${ingestionSources} ingestion sources and ${transformSources} transformation source streams.`,
+    `Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension groups, ${payload.gold.facts.length} fact groups, and ${totalReports} reports across ${totalTabs} tabs.`,
+    `Work package plan contains ${wpCount} package(s) aligned to the delivery model.`,
+    `Total calculated effort is ${formatNum(totalHours)} PRG hours including contingency, documentation, and UAT.`,
+    payload.assumptions.ingestion ? `Ingestion assumption: ${payload.assumptions.ingestion}` : '',
+    payload.assumptions.transformation ? `Transformation assumption: ${payload.assumptions.transformation}` : '',
+    payload.assumptions.gold ? `Gold/BI assumption: ${payload.assumptions.gold}` : '',
+  ].filter(Boolean).join('\n');
+}
+
 function rowNum(row, selector, fallback = 0) {
   return Number(row.querySelector(selector)?.value) || fallback;
 }
@@ -157,6 +188,9 @@ function calculateEstimate() {
   const documentationHours = baseHours * documentationPct;
   const uatHours = baseHours * uatPct;
   const totalHours = baseHours + contingencyHours + documentationHours + uatHours;
+
+  const payload = buildJsonPayload();
+  getElement('generatedAssumptions').value = generateAssumptions(payload, totalHours);
 
   setText('ingestionHours', ingestionHours);
   setText('transformationHours', transformationHours);
@@ -217,6 +251,12 @@ function buildJsonPayload() {
         complexity: rowNum(row, '.report-complexity', 1.5),
       })),
     },
+    workPackages: Array.from(document.querySelectorAll('.workpackage-row')).map((row) => ({
+      name: row.querySelector('.wp-name')?.value || '',
+      description: row.querySelector('.wp-description')?.value || '',
+      owner: row.querySelector('.wp-owner')?.value || '',
+      hours: rowNum(row, '.wp-hours'),
+    })),
     assumptions: {
       ingestion: getElement('ingestionAssumptions')?.value || '',
       transformation: getElement('transformAssumptions')?.value || '',
@@ -244,12 +284,14 @@ function applyJsonToForm(payload) {
   const dimensionRows = Array.isArray(payload.gold?.dimensions) ? payload.gold.dimensions : [];
   const factRows = Array.isArray(payload.gold?.facts) ? payload.gold.facts : [];
   const reportRows = Array.isArray(payload.gold?.reports) ? payload.gold.reports : [];
+  const workPackageRows = Array.isArray(payload.workPackages) ? payload.workPackages : [];
 
   getElement('ingestionRows').innerHTML = '';
   getElement('transformRows').innerHTML = '';
   getElement('dimensionRows').innerHTML = '';
   getElement('factRows').innerHTML = '';
   getElement('reportRows').innerHTML = '';
+  getElement('workPackageRows').innerHTML = '';
 
   ingestionRows.forEach((row) => {
     addIngestionRow(row.name || '');
@@ -286,12 +328,15 @@ function applyJsonToForm(payload) {
 
   reportRows.forEach((row) => {
     addReportRow();
+  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
     const current = document.querySelector('#reportRows .report-row:last-child');
     if (!current) return;
     current.querySelector('.report-count').value = row.count || 0;
     current.querySelector('.report-tabs').value = row.tabs || 1;
     current.querySelector('.report-complexity').value = String(row.complexity || 1.5);
   });
+
+  workPackageRows.forEach((row) => addWorkPackageRow(row));
 
   if (payload.calibration) {
     const calibrationFields = [
@@ -316,7 +361,7 @@ function applyJsonToForm(payload) {
   getElement('transformAssumptions').value = payload.assumptions?.transformation || '';
   getElement('goldAssumptions').value = payload.assumptions?.gold || '';
 
-  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + reportRows.length;
+  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + reportRows.length + workPackageRows.length;
   getElement('uploadStatus').textContent = `Loaded JSON successfully. Added ${rowsLoaded} row(s).`;
   calculateEstimate();
 }
@@ -336,6 +381,34 @@ function handleJsonUpload(event) {
     }
   };
   reader.readAsText(file);
+}
+
+function exportRequirementsTemplate() {
+  const payload = buildJsonPayload();
+  const assumptions = (getElement('generatedAssumptions')?.value || '').split('\n').filter(Boolean);
+  const template = {
+    templateVersion: 'requirementsapp-import-v1',
+    projectName: 'Imported from estimate app',
+    generatedAtUtc: new Date().toISOString(),
+    assumptions,
+    workPackages: payload.workPackages.map((w, idx) => ({
+      id: idx + 1,
+      name: w.name || `Work package ${idx + 1}` ,
+      description: w.description,
+      owner: w.owner,
+      estimateHours: w.hours,
+    })),
+    estimateSummary: payload,
+  };
+  const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'requirements-template.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+  getElement('uploadStatus').textContent = 'Exported requirements app template JSON.';
 }
 
 function initEstimator() {
@@ -361,11 +434,18 @@ function initEstimator() {
 
   getElement('addReportBtn').addEventListener('click', () => {
     addReportRow();
+  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
+    calculateEstimate();
+  });
+
+  getElement('addWorkPackageBtn').addEventListener('click', () => {
+    addWorkPackageRow();
     calculateEstimate();
   });
 
   getElement('jsonUpload').addEventListener('change', handleJsonUpload);
   getElement('exportJsonBtn').addEventListener('click', exportJson);
+  getElement('exportRequirementsTemplateBtn').addEventListener('click', exportRequirementsTemplate);
 
   document.querySelectorAll('input,select,textarea').forEach((el) => {
     if (el.id !== 'jsonUpload') {
@@ -378,6 +458,7 @@ function initEstimator() {
   addDimensionRow();
   addFactRow();
   addReportRow();
+  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
   calculateEstimate();
 }
 
