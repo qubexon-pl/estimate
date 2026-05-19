@@ -25,8 +25,10 @@
             <div class="card-body">
               <h2 class="h5 mb-3">Load Estimation from JSON</h2>
               <input id="jsonUpload" class="form-control mb-3" type="file" accept="application/json,.json" />
-              <button id="exportJsonBtn" class="btn btn-outline-info w-100 mb-2" type="button">Export estimation to JSON</button>
-              <button id="exportRequirementsTemplateBtn" class="btn btn-info w-100" type="button">Export requirements app template</button>
+              <div class="export-btn-row">
+                <button id="exportJsonBtn" class="btn btn-outline-info" type="button">Export estimation to JSON</button>
+                <button id="exportRequirementsTemplateBtn" class="btn btn-info" type="button">Export requirements app template</button>
+              </div>
               <p id="uploadStatus" class="form-text mb-0 mt-2" aria-live="polite"></p>
             </div>
           </div>
@@ -189,7 +191,7 @@
 
               <div class="layer-heading">
                 <h3 class="h6 text-uppercase text-muted mb-0">Work packages</h3>
-                <button id="addWorkPackageBtn" class="btn btn-outline-info" type="button">Add work package</button>
+                <button id="addWorkPackageBtn" class="btn btn-outline-info" type="button">Add Task/Phase</button>
               </div>
               <div class="table-wrap mb-0">
                 <div class="table-head row-4">
@@ -203,6 +205,17 @@
 
               <h3 class="h6 text-uppercase text-muted mt-3">Assumptions</h3>
               <textarea class="form-control" id="goldAssumptions" rows="2" placeholder="Optional assumptions for gold/semantic/reporting"></textarea>
+            </div>
+          </section>
+
+          <section class="card shadow-sm border-0 section-card layer-block">
+            <div class="card-body">
+              <h2 class="h5 mb-3">Project Summary</h2>
+              <div class="result-list mb-0">
+                <p>PRG estimation hours: <strong id="summaryPrgHours">0.0</strong></p>
+                <p>Additional tasks/phases hours: <strong id="summaryAdditionalHours">0.0</strong></p>
+                <p class="text-info fw-semibold mb-0">Total project hours: <strong id="summaryTotalHours">0.0</strong></p>
+              </div>
             </div>
           </section>
         </section>

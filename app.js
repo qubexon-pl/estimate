@@ -137,7 +137,7 @@ function generateAssumptions(payload, totalHours) {
   return [
     `Estimate covers ${ingestionSources} ingestion sources and ${transformSources} transformation source streams.`,
     `Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension groups, ${payload.gold.facts.length} fact groups, and ${payload.gold.semanticModels.length} semantic model groups, ${totalReports} reports across ${totalTabs} tabs.`,
-    `Work package plan contains ${wpCount} package(s) aligned to the delivery model.`,
+    `Additional task/phase plan contains ${wpCount} item(s) aligned to the delivery model.`,
     `Total calculated effort is ${formatNum(totalHours)} PRG hours including contingency, documentation, and UAT.`,
     payload.assumptions.ingestion ? `Ingestion assumption: ${payload.assumptions.ingestion}` : '',
     payload.assumptions.transformation ? `Transformation assumption: ${payload.assumptions.transformation}` : '',
@@ -206,6 +206,11 @@ function calculateEstimate() {
   const documentationHours = baseHours * documentationPct;
   const uatHours = baseHours * uatPct;
   const totalHours = baseHours + contingencyHours + documentationHours + uatHours;
+  const additionalHours = Array.from(document.querySelectorAll('.workpackage-row')).reduce(
+    (sum, row) => sum + rowNum(row, '.wp-hours'),
+    0,
+  );
+  const projectTotalHours = totalHours + additionalHours;
 
   const payload = buildJsonPayload();
   getElement('generatedAssumptions').value = generateAssumptions(payload, totalHours);
@@ -222,6 +227,9 @@ function calculateEstimate() {
   setText('uatHours', uatHours);
   setText('totalHours', totalHours);
   setValue('prgHours', totalHours);
+  setText('summaryPrgHours', totalHours);
+  setText('summaryAdditionalHours', additionalHours);
+  setText('summaryTotalHours', projectTotalHours);
 
   const weeks = Math.max(1, getNum('deliveryWeeks'));
   setText('teamSize', totalHours / (weeks * 30));
@@ -427,7 +435,7 @@ function exportRequirementsTemplate() {
     assumptions,
     workPackages: payload.workPackages.map((w, idx) => ({
       id: idx + 1,
-      name: w.name || `Work package ${idx + 1}` ,
+      name: w.name || `Task/Phase ${idx + 1}` ,
       description: w.description,
       owner: w.owner,
       estimateHours: w.hours,
