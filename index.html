@@ -211,10 +211,36 @@
           <section class="card shadow-sm border-0 section-card layer-block">
             <div class="card-body">
               <h2 class="h5 mb-3">Project Summary</h2>
-              <div class="result-list mb-0">
+              <div class="result-list">
                 <p>PRG estimation hours: <strong id="summaryPrgHours">0.0</strong></p>
                 <p>Additional tasks/phases hours: <strong id="summaryAdditionalHours">0.0</strong></p>
-                <p class="text-info fw-semibold mb-0">Total project hours: <strong id="summaryTotalHours">0.0</strong></p>
+                <p class="text-info fw-semibold">Total project hours: <strong id="summaryTotalHours">0.0</strong></p>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-striped align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Layer</th>
+                      <th>Scope item</th>
+                      <th class="text-end">Hours</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projectSummaryBreakdownRows"></tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="2">PRG total</th>
+                      <th class="text-end" id="summaryBreakdownPrgTotal">0.0</th>
+                    </tr>
+                    <tr>
+                      <th colspan="2">Additional tasks/phases</th>
+                      <th class="text-end" id="summaryBreakdownAdditional">0.0</th>
+                    </tr>
+                    <tr>
+                      <th colspan="2">Project total</th>
+                      <th class="text-end" id="summaryBreakdownProjectTotal">0.0</th>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             </div>
           </section>

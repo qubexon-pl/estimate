@@ -135,14 +135,36 @@ function generateAssumptions(payload, totalHours) {
   const totalTabs = payload.gold.reports.reduce((s,r)=>s+(Number(r.tabs)||0),0);
   const wpCount = payload.workPackages.length;
   return [
-    `Estimate covers ${ingestionSources} ingestion sources and ${transformSources} transformation source streams.`,
-    `Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension groups, ${payload.gold.facts.length} fact groups, and ${payload.gold.semanticModels.length} semantic model groups, ${totalReports} reports across ${totalTabs} tabs.`,
-    `Additional task/phase plan contains ${wpCount} item(s) aligned to the delivery model.`,
-    `Total calculated effort is ${formatNum(totalHours)} PRG hours including contingency, documentation, and UAT.`,
-    payload.assumptions.ingestion ? `Ingestion assumption: ${payload.assumptions.ingestion}` : '',
-    payload.assumptions.transformation ? `Transformation assumption: ${payload.assumptions.transformation}` : '',
-    payload.assumptions.gold ? `Gold/BI assumption: ${payload.assumptions.gold}` : '',
-  ].filter(Boolean).join('\n');
+    'Scope overview:',
+    `• Estimate covers ${ingestionSources} ingestion source(s) and ${transformSources} transformation source stream(s).`,
+    `• Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension group(s), ${payload.gold.facts.length} fact group(s), ${payload.gold.semanticModels.length} semantic model group(s), ${totalReports} report(s), and ${totalTabs} tab(s).`,
+    `• Additional task/phase plan contains ${wpCount} item(s) aligned to the delivery model.`,
+    '',
+    'Effort summary:',
+    `• Total calculated effort is ${formatNum(totalHours)} PRG hours including contingency, documentation, and UAT.`,
+    '',
+    'Input assumptions:',
+    payload.assumptions.ingestion ? `• Ingestion: ${payload.assumptions.ingestion}` : '• Ingestion: Not specified.',
+    payload.assumptions.transformation ? `• Transformation: ${payload.assumptions.transformation}` : '• Transformation: Not specified.',
+    payload.assumptions.gold ? `• Gold/BI: ${payload.assumptions.gold}` : '• Gold/BI: Not specified.',
+  ].join('\n');
+}
+
+function renderProjectSummaryBreakdown(rows, prgTotal, additionalHours, projectTotal) {
+  const body = getElement('projectSummaryBreakdownRows');
+  if (!body) return;
+  body.innerHTML = rows
+    .map((row) => `
+      <tr>
+        <td>${row.layer}</td>
+        <td>${row.item}</td>
+        <td class="text-end">${formatNum(row.hours)}</td>
+      </tr>
+    `)
+    .join('');
+  setText('summaryBreakdownPrgTotal', prgTotal);
+  setText('summaryBreakdownAdditional', additionalHours);
+  setText('summaryBreakdownProjectTotal', projectTotal);
 }
 
 function rowNum(row, selector, fallback = 0) {
@@ -174,12 +196,33 @@ function calculateEstimate() {
     const qualityFactor = rowNum(row, '.ingestion-quality-factor', 1);
     return sum + (hrsPerSource + objects * hrsPerIngest) * sourceComplexity * qualityFactor;
   }, 0);
+  const ingestionBreakdown = Array.from(document.querySelectorAll('.ingestion-row')).map((row, index) => {
+    const objects = rowNum(row, '.ingestion-object-count');
+    const sourceComplexity = rowNum(row, '.ingestion-source-complexity', 1);
+    const qualityFactor = rowNum(row, '.ingestion-quality-factor', 1);
+    const name = row.querySelector('.ingestion-source-name')?.value?.trim() || `Source ${index + 1}`;
+    return {
+      layer: 'Ingestion Layer',
+      item: name,
+      hours: (hrsPerSource + objects * hrsPerIngest) * sourceComplexity * qualityFactor,
+    };
+  });
 
   const transformationHours = Array.from(document.querySelectorAll('.transform-row')).reduce((sum, row) => {
     const transformations = rowNum(row, '.transform-count');
     const complexity = rowNum(row, '.transform-complexity', 1);
     return sum + transformations * hrsPerTransform * complexity;
   }, 0);
+  const transformationBreakdown = Array.from(document.querySelectorAll('.transform-row')).map((row, index) => {
+    const transformations = rowNum(row, '.transform-count');
+    const complexity = rowNum(row, '.transform-complexity', 1);
+    const name = row.querySelector('.transform-source-name')?.value?.trim() || `Source ${index + 1}`;
+    return {
+      layer: 'Transformation Layer',
+      item: name,
+      hours: transformations * hrsPerTransform * complexity,
+    };
+  });
 
   const dimensionHours = Array.from(document.querySelectorAll('.dimension-row')).reduce((sum, row) => {
     const count = rowNum(row, '.dimension-count');
@@ -206,6 +249,26 @@ function calculateEstimate() {
     const tabMultiplier = 1 + Math.max(0, tabs - 1) * tabImpactPct;
     return sum + count * hrsPerReport * complexity * tabMultiplier;
   }, 0);
+  const semanticBreakdown = Array.from(document.querySelectorAll('.semantic-row')).map((row, index) => {
+    const count = rowNum(row, '.semantic-count');
+    const complexity = rowNum(row, '.semantic-complexity', 1);
+    return {
+      layer: 'Semantic Model',
+      item: `Semantic group ${index + 1}`,
+      hours: count * hrsPerSemanticModel * complexity,
+    };
+  });
+  const reportBreakdown = Array.from(document.querySelectorAll('.report-row')).map((row, index) => {
+    const count = rowNum(row, '.report-count');
+    const tabs = Math.max(1, rowNum(row, '.report-tabs', 1));
+    const complexity = rowNum(row, '.report-complexity', 1);
+    const tabMultiplier = 1 + Math.max(0, tabs - 1) * tabImpactPct;
+    return {
+      layer: 'Power BI Reports',
+      item: `Report group ${index + 1} (${count} report(s), ${tabs} tab(s))`,
+      hours: count * hrsPerReport * complexity * tabMultiplier,
+    };
+  });
 
   const goldHours = dimensionHours + factHours + semanticHours + reportHours;
   const baseHours = ingestionHours + transformationHours + goldHours;
@@ -234,6 +297,12 @@ function calculateEstimate() {
   setText('summaryPrgHours', getNum('prgHours'));
   setText('summaryAdditionalHours', getWorkPackageHoursTotal());
   setText('summaryTotalHours', getNum('prgHours') + getWorkPackageHoursTotal());
+  renderProjectSummaryBreakdown(
+    [...ingestionBreakdown, ...transformationBreakdown, ...semanticBreakdown, ...reportBreakdown],
+    totalHours,
+    additionalHours,
+    projectTotalHours,
+  );
 
   const weeks = Math.max(1, getNum('deliveryWeeks'));
   setText('teamSize', totalHours / (weeks * 30));
