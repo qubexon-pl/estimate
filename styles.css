@@ -7,6 +7,7 @@ body { margin: 0; }
   padding: 1.5rem;
 }
 .section-card { border-radius: 0.6rem; }
+.export-btn-row { display:grid; grid-template-columns: 1fr 1fr; gap:.5rem; }
 .layer-block { margin-bottom: 1rem; }
 .layer-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.75rem; }
 .action-stacks { display:flex; flex-wrap:wrap; gap:.75rem; }
@@ -27,4 +28,5 @@ body { margin: 0; }
 @media (max-width: 992px) {
   .row-4,.row-3,.row-2,.table-row-with-delete,.table-row-with-delete-3,.table-row-with-delete-2 { grid-template-columns: 1fr; }
   .layer-heading { flex-direction:column; align-items:flex-start; }
+  .export-btn-row { grid-template-columns: 1fr; }
 }
