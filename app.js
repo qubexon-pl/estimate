@@ -87,6 +87,17 @@ function addFactRow() {
   });
 }
 
+function addSemanticRow() {
+  addRow('semanticRows', {
+    className: 'table-row table-row-with-delete-2 semantic-row',
+    html: `
+      <input class="form-control semantic-count" type="number" min="0" value="0" />
+      <select class="form-select semantic-complexity">${complexityOptions('1.5')}</select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete semantic model row">🗑</button>
+    `,
+  });
+}
+
 function addReportRow() {
   addRow('reportRows', {
     className: 'table-row table-row-with-delete-3 report-row',
@@ -125,7 +136,7 @@ function generateAssumptions(payload, totalHours) {
   const wpCount = payload.workPackages.length;
   return [
     `Estimate covers ${ingestionSources} ingestion sources and ${transformSources} transformation source streams.`,
-    `Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension groups, ${payload.gold.facts.length} fact groups, and ${totalReports} reports across ${totalTabs} tabs.`,
+    `Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension groups, ${payload.gold.facts.length} fact groups, and ${payload.gold.semanticModels.length} semantic model groups, ${totalReports} reports across ${totalTabs} tabs.`,
     `Work package plan contains ${wpCount} package(s) aligned to the delivery model.`,
     `Total calculated effort is ${formatNum(totalHours)} PRG hours including contingency, documentation, and UAT.`,
     payload.assumptions.ingestion ? `Ingestion assumption: ${payload.assumptions.ingestion}` : '',
@@ -144,6 +155,7 @@ function calculateEstimate() {
   const hrsPerTransform = getNum('hrsPerTransform');
   const hrsPerDimension = getNum('hrsPerDimension');
   const hrsPerFact = getNum('hrsPerFact');
+  const hrsPerSemanticModel = getNum('hrsPerSemanticModel');
   const hrsPerReport = getNum('hrsPerReport');
   const tabImpactPct = getNum('tabImpactPct') / 100;
   const documentationPct = getNum('documentationPct') / 100;
@@ -174,6 +186,12 @@ function calculateEstimate() {
     return sum + count * hrsPerFact * complexity;
   }, 0);
 
+  const semanticHours = Array.from(document.querySelectorAll('.semantic-row')).reduce((sum, row) => {
+    const count = rowNum(row, '.semantic-count');
+    const complexity = rowNum(row, '.semantic-complexity', 1);
+    return sum + count * hrsPerSemanticModel * complexity;
+  }, 0);
+
   const reportHours = Array.from(document.querySelectorAll('.report-row')).reduce((sum, row) => {
     const count = rowNum(row, '.report-count');
     const tabs = Math.max(1, rowNum(row, '.report-tabs', 1));
@@ -182,7 +200,7 @@ function calculateEstimate() {
     return sum + count * hrsPerReport * complexity * tabMultiplier;
   }, 0);
 
-  const goldHours = dimensionHours + factHours + reportHours;
+  const goldHours = dimensionHours + factHours + semanticHours + reportHours;
   const baseHours = ingestionHours + transformationHours + goldHours;
   const contingencyHours = baseHours * 0.15;
   const documentationHours = baseHours * documentationPct;
@@ -196,6 +214,7 @@ function calculateEstimate() {
   setText('transformationHours', transformationHours);
   setText('dimensionHours', dimensionHours);
   setText('factHours', factHours);
+  setText('semanticHours', semanticHours);
   setText('goldHours', goldHours);
   setText('baseHours', baseHours);
   setText('contingencyHours', contingencyHours);
@@ -216,6 +235,7 @@ function buildJsonPayload() {
       hrsPerTransform: getNum('hrsPerTransform'),
       hrsPerDimension: getNum('hrsPerDimension'),
       hrsPerFact: getNum('hrsPerFact'),
+      hrsPerSemanticModel: getNum('hrsPerSemanticModel'),
       hrsPerReport: getNum('hrsPerReport'),
       tabImpactPct: getNum('tabImpactPct'),
       documentationPct: getNum('documentationPct'),
@@ -244,6 +264,10 @@ function buildJsonPayload() {
       facts: Array.from(document.querySelectorAll('.fact-row')).map((row) => ({
         count: rowNum(row, '.fact-count'),
         complexity: rowNum(row, '.fact-complexity', 1.5),
+      })),
+      semanticModels: Array.from(document.querySelectorAll('.semantic-row')).map((row) => ({
+        count: rowNum(row, '.semantic-count'),
+        complexity: rowNum(row, '.semantic-complexity', 1.5),
       })),
       reports: Array.from(document.querySelectorAll('.report-row')).map((row) => ({
         count: rowNum(row, '.report-count'),
@@ -283,6 +307,7 @@ function applyJsonToForm(payload) {
   const transformRows = Array.isArray(payload.transformation?.sources) ? payload.transformation.sources : [];
   const dimensionRows = Array.isArray(payload.gold?.dimensions) ? payload.gold.dimensions : [];
   const factRows = Array.isArray(payload.gold?.facts) ? payload.gold.facts : [];
+  const semanticRows = Array.isArray(payload.gold?.semanticModels) ? payload.gold.semanticModels : [];
   const reportRows = Array.isArray(payload.gold?.reports) ? payload.gold.reports : [];
   const workPackageRows = Array.isArray(payload.workPackages) ? payload.workPackages : [];
 
@@ -290,6 +315,7 @@ function applyJsonToForm(payload) {
   getElement('transformRows').innerHTML = '';
   getElement('dimensionRows').innerHTML = '';
   getElement('factRows').innerHTML = '';
+  getElement('semanticRows').innerHTML = '';
   getElement('reportRows').innerHTML = '';
   getElement('workPackageRows').innerHTML = '';
 
@@ -326,9 +352,16 @@ function applyJsonToForm(payload) {
     current.querySelector('.fact-complexity').value = String(row.complexity || 1.5);
   });
 
+  semanticRows.forEach((row) => {
+    addSemanticRow();
+    const current = document.querySelector('#semanticRows .semantic-row:last-child');
+    if (!current) return;
+    current.querySelector('.semantic-count').value = row.count || 0;
+    current.querySelector('.semantic-complexity').value = String(row.complexity || 1.5);
+  });
+
   reportRows.forEach((row) => {
     addReportRow();
-  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
     const current = document.querySelector('#reportRows .report-row:last-child');
     if (!current) return;
     current.querySelector('.report-count').value = row.count || 0;
@@ -345,6 +378,7 @@ function applyJsonToForm(payload) {
       'hrsPerTransform',
       'hrsPerDimension',
       'hrsPerFact',
+      'hrsPerSemanticModel',
       'hrsPerReport',
       'tabImpactPct',
       'documentationPct',
@@ -361,7 +395,7 @@ function applyJsonToForm(payload) {
   getElement('transformAssumptions').value = payload.assumptions?.transformation || '';
   getElement('goldAssumptions').value = payload.assumptions?.gold || '';
 
-  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + reportRows.length + workPackageRows.length;
+  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + semanticRows.length + reportRows.length + workPackageRows.length;
   getElement('uploadStatus').textContent = `Loaded JSON successfully. Added ${rowsLoaded} row(s).`;
   calculateEstimate();
 }
@@ -432,9 +466,13 @@ function initEstimator() {
     calculateEstimate();
   });
 
+  getElement('addSemanticBtn').addEventListener('click', () => {
+    addSemanticRow();
+    calculateEstimate();
+  });
+
   getElement('addReportBtn').addEventListener('click', () => {
     addReportRow();
-  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
     calculateEstimate();
   });
 
@@ -457,8 +495,8 @@ function initEstimator() {
   addTransformRow('Source A');
   addDimensionRow();
   addFactRow();
+  addSemanticRow();
   addReportRow();
-  addWorkPackageRow({ name: 'Deployment and hypercare', owner: 'Data Engineer', hours: 24 });
   calculateEstimate();
 }
 

@@ -39,6 +39,7 @@
                 <p>Transformation hours: <strong id="transformationHours">0.0</strong></p>
                 <p>Dimension hours: <strong id="dimensionHours">0.0</strong></p>
                 <p>Fact hours: <strong id="factHours">0.0</strong></p>
+                <p>Semantic model hours: <strong id="semanticHours">0.0</strong></p>
                 <p>Gold/BI hours: <strong id="goldHours">0.0</strong></p>
                 <p>Base implementation hours: <strong id="baseHours">0.0</strong></p>
                 <p>Risk/contingency (15%): <strong id="contingencyHours">0.0</strong></p>
@@ -65,6 +66,7 @@
                 <label class="col-12 col-md-6">Hours / transformation<input class="form-control" id="hrsPerTransform" type="number" min="0" step="0.1" value="1.8" /></label>
                 <label class="col-12 col-md-6">Hours / dimension object<input class="form-control" id="hrsPerDimension" type="number" min="0" step="0.1" value="3" /></label>
                 <label class="col-12 col-md-6">Hours / fact object<input class="form-control" id="hrsPerFact" type="number" min="0" step="0.1" value="5" /></label>
+                <label class="col-12 col-md-6">Hours / semantic model<input class="form-control" id="hrsPerSemanticModel" type="number" min="0" step="0.1" value="18" /></label>
                 <label class="col-12 col-md-6">Hours / report<input class="form-control" id="hrsPerReport" type="number" min="0" step="0.1" value="8" /></label>
                 <label class="col-12 col-md-6">Per extra report tab (% impact)<input class="form-control" id="tabImpactPct" type="number" min="0" step="0.1" value="15" /></label>
                 <label class="col-12 col-md-6">Documentation (%)<input class="form-control" id="documentationPct" type="number" min="0" step="0.1" value="10" /></label>
@@ -143,6 +145,9 @@
                     <button id="addFactBtn" class="btn btn-outline-info" type="button">Add facts</button>
                   </div>
                   <div class="action-stack">
+                    <button id="addSemanticBtn" class="btn btn-outline-info" type="button">Add semantic models</button>
+                  </div>
+                  <div class="action-stack">
                     <button id="addReportBtn" class="btn btn-outline-info" type="button">Add reports</button>
                   </div>
                 </div>
@@ -164,6 +169,15 @@
                 <div id="factRows" class="table-body"></div>
               </div>
 
+
+              <div class="table-wrap">
+                <div class="table-head row-2">
+                  <span>Semantic models number</span>
+                  <span>Logic complexity</span>
+                </div>
+                <div id="semanticRows" class="table-body"></div>
+              </div>
+
               <div class="table-wrap mb-3">
                 <div class="table-head row-3">
                   <span>Number of Power BI reports</span>
@@ -179,7 +193,7 @@
               </div>
               <div class="table-wrap mb-0">
                 <div class="table-head row-4">
-                  <span>Work package name</span>
+                  <span>Additional task/phase</span>
                   <span>Description</span>
                   <span>Owner role</span>
                   <span>Estimate hours</span>
