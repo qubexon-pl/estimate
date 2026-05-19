@@ -149,6 +149,13 @@ function rowNum(row, selector, fallback = 0) {
   return Number(row.querySelector(selector)?.value) || fallback;
 }
 
+function getWorkPackageHoursTotal() {
+  return Array.from(document.querySelectorAll('.workpackage-row')).reduce(
+    (sum, row) => sum + rowNum(row, '.wp-hours'),
+    0,
+  );
+}
+
 function calculateEstimate() {
   const hrsPerSource = getNum('hrsPerSource');
   const hrsPerIngest = getNum('hrsPerIngest');
@@ -206,10 +213,7 @@ function calculateEstimate() {
   const documentationHours = baseHours * documentationPct;
   const uatHours = baseHours * uatPct;
   const totalHours = baseHours + contingencyHours + documentationHours + uatHours;
-  const additionalHours = Array.from(document.querySelectorAll('.workpackage-row')).reduce(
-    (sum, row) => sum + rowNum(row, '.wp-hours'),
-    0,
-  );
+  const additionalHours = getWorkPackageHoursTotal();
   const projectTotalHours = totalHours + additionalHours;
 
   const payload = buildJsonPayload();
@@ -227,9 +231,9 @@ function calculateEstimate() {
   setText('uatHours', uatHours);
   setText('totalHours', totalHours);
   setValue('prgHours', totalHours);
-  setText('summaryPrgHours', totalHours);
-  setText('summaryAdditionalHours', additionalHours);
-  setText('summaryTotalHours', projectTotalHours);
+  setText('summaryPrgHours', getNum('prgHours'));
+  setText('summaryAdditionalHours', getWorkPackageHoursTotal());
+  setText('summaryTotalHours', getNum('prgHours') + getWorkPackageHoursTotal());
 
   const weeks = Math.max(1, getNum('deliveryWeeks'));
   setText('teamSize', totalHours / (weeks * 30));
