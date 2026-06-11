@@ -250,6 +250,15 @@ textarea.form-control { line-height: 1.5; }
   font-style: italic;
 }
 
+.layer-total-line {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin: -0.2rem 0 1rem;
+  color: var(--app-text);
+  font-weight: 800;
+}
+
 .icon-only-btn {
   width: 2.4rem;
   min-height: 2.4rem;

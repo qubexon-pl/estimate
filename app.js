@@ -2,6 +2,7 @@ const getElement = (id) => document.getElementById(id);
 const getNum = (id) => Number(getElement(id)?.value) || 0;
 
 const formatNum = (value) => value.toFixed(1);
+const formatCount = (value) => Number.isInteger(value) ? String(value) : formatNum(value);
 const setText = (id, value) => {
   const el = getElement(id);
   if (el) el.textContent = formatNum(value);
@@ -9,6 +10,10 @@ const setText = (id, value) => {
 const setValue = (id, value) => {
   const el = getElement(id);
   if (el) el.value = formatNum(value);
+};
+const setLayerTotal = (id, summary) => {
+  const el = getElement(id);
+  if (el) el.innerHTML = `<strong>Total:</strong> ${summary}`;
 };
 
 function complexityOptions(defaultValue = '1') {
@@ -190,13 +195,18 @@ function calculateEstimate() {
   const documentationPct = getNum('documentationPct') / 100;
   const uatPct = getNum('uatPct') / 100;
 
-  const ingestionHours = Array.from(document.querySelectorAll('.ingestion-row')).reduce((sum, row) => {
+  const ingestionRows = Array.from(document.querySelectorAll('.ingestion-row'));
+  const ingestionObjectTotal = ingestionRows.reduce(
+    (sum, row) => sum + rowNum(row, '.ingestion-object-count'),
+    0,
+  );
+  const ingestionHours = ingestionRows.reduce((sum, row) => {
     const objects = rowNum(row, '.ingestion-object-count');
     const sourceComplexity = rowNum(row, '.ingestion-source-complexity', 1);
     const qualityFactor = rowNum(row, '.ingestion-quality-factor', 1);
     return sum + (hrsPerSource + objects * hrsPerIngest) * sourceComplexity * qualityFactor;
   }, 0);
-  const ingestionBreakdown = Array.from(document.querySelectorAll('.ingestion-row')).map((row, index) => {
+  const ingestionBreakdown = ingestionRows.map((row, index) => {
     const objects = rowNum(row, '.ingestion-object-count');
     const sourceComplexity = rowNum(row, '.ingestion-source-complexity', 1);
     const qualityFactor = rowNum(row, '.ingestion-quality-factor', 1);
@@ -208,12 +218,17 @@ function calculateEstimate() {
     };
   });
 
-  const transformationHours = Array.from(document.querySelectorAll('.transform-row')).reduce((sum, row) => {
+  const transformationRows = Array.from(document.querySelectorAll('.transform-row'));
+  const transformationCountTotal = transformationRows.reduce(
+    (sum, row) => sum + rowNum(row, '.transform-count'),
+    0,
+  );
+  const transformationHours = transformationRows.reduce((sum, row) => {
     const transformations = rowNum(row, '.transform-count');
     const complexity = rowNum(row, '.transform-complexity', 1);
     return sum + transformations * hrsPerTransform * complexity;
   }, 0);
-  const transformationBreakdown = Array.from(document.querySelectorAll('.transform-row')).map((row, index) => {
+  const transformationBreakdown = transformationRows.map((row, index) => {
     const transformations = rowNum(row, '.transform-count');
     const complexity = rowNum(row, '.transform-complexity', 1);
     const name = row.querySelector('.transform-source-name')?.value?.trim() || `Source ${index + 1}`;
@@ -282,6 +297,14 @@ function calculateEstimate() {
   const payload = buildJsonPayload();
   getElement('generatedAssumptions').value = generateAssumptions(payload, totalHours);
 
+  setLayerTotal(
+    'ingestionLayerTotal',
+    `${ingestionRows.length} source(s), ${formatCount(ingestionObjectTotal)} object(s), ${formatNum(ingestionHours)} hours`,
+  );
+  setLayerTotal(
+    'transformationLayerTotal',
+    `${transformationRows.length} source(s), ${formatCount(transformationCountTotal)} transformation(s), ${formatNum(transformationHours)} hours`,
+  );
   setText('ingestionHours', ingestionHours);
   setText('transformationHours', transformationHours);
   setText('dimensionHours', dimensionHours);
