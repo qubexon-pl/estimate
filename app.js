@@ -15,6 +15,12 @@ const setLayerTotal = (id, summary) => {
   const el = getElement(id);
   if (el) el.innerHTML = `<strong>Total:</strong> ${summary}`;
 };
+const escapeHtml = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/\"/g, '&quot;')
+  .replace(/'/g, '&#39;');
 
 function complexityOptions(defaultValue = '1') {
   return `
@@ -155,20 +161,18 @@ function generateAssumptions(payload, totalHours) {
   ].join('\n');
 }
 
-function renderProjectSummaryBreakdown(rows, prgTotal, additionalHours, projectTotal) {
+function renderProjectSummaryBreakdown(rows, projectTotal) {
   const body = getElement('projectSummaryBreakdownRows');
   if (!body) return;
   body.innerHTML = rows
     .map((row) => `
       <tr>
-        <td>${row.layer}</td>
-        <td>${row.item}</td>
+        <td>${escapeHtml(row.layer)}</td>
+        <td>${escapeHtml(row.item)}</td>
         <td class="text-end">${formatNum(row.hours)}</td>
       </tr>
     `)
     .join('');
-  setText('summaryBreakdownPrgTotal', prgTotal);
-  setText('summaryBreakdownAdditional', additionalHours);
   setText('summaryBreakdownProjectTotal', projectTotal);
 }
 
@@ -213,7 +217,7 @@ function calculateEstimate() {
     const name = row.querySelector('.ingestion-source-name')?.value?.trim() || `Source ${index + 1}`;
     return {
       layer: 'Ingestion Layer',
-      item: name,
+      item: `${name} (${formatNum(hrsPerSource)} hrs/source + ${formatCount(objects)} object(s) × ${formatNum(hrsPerIngest)} hrs/object; ${formatNum(sourceComplexity)} complexity; ${formatNum(qualityFactor)} quality factor)`,
       hours: (hrsPerSource + objects * hrsPerIngest) * sourceComplexity * qualityFactor,
     };
   });
@@ -234,57 +238,60 @@ function calculateEstimate() {
     const name = row.querySelector('.transform-source-name')?.value?.trim() || `Source ${index + 1}`;
     return {
       layer: 'Transformation Layer',
-      item: name,
+      item: `${name} (${formatCount(transformations)} transformation(s) × ${formatNum(hrsPerTransform)} hrs/transformation × ${formatNum(complexity)} complexity)`,
       hours: transformations * hrsPerTransform * complexity,
     };
   });
 
-  const dimensionHours = Array.from(document.querySelectorAll('.dimension-row')).reduce((sum, row) => {
+  const dimensionRows = Array.from(document.querySelectorAll('.dimension-row'));
+  const dimensionBreakdown = dimensionRows.map((row, index) => {
     const count = rowNum(row, '.dimension-count');
     const complexity = rowNum(row, '.dimension-complexity', 1);
-    return sum + count * hrsPerDimension * complexity;
-  }, 0);
+    return {
+      layer: 'Gold Layer - Dimensions',
+      item: `Dimension group ${index + 1} (${formatCount(count)} object(s) × ${formatNum(hrsPerDimension)} hrs/object × ${formatNum(complexity)} complexity)`,
+      hours: count * hrsPerDimension * complexity,
+    };
+  });
+  const dimensionHours = dimensionBreakdown.reduce((sum, row) => sum + row.hours, 0);
 
-  const factHours = Array.from(document.querySelectorAll('.fact-row')).reduce((sum, row) => {
+  const factRows = Array.from(document.querySelectorAll('.fact-row'));
+  const factBreakdown = factRows.map((row, index) => {
     const count = rowNum(row, '.fact-count');
     const complexity = rowNum(row, '.fact-complexity', 1);
-    return sum + count * hrsPerFact * complexity;
-  }, 0);
+    return {
+      layer: 'Gold Layer - Facts',
+      item: `Fact group ${index + 1} (${formatCount(count)} object(s) × ${formatNum(hrsPerFact)} hrs/object × ${formatNum(complexity)} complexity)`,
+      hours: count * hrsPerFact * complexity,
+    };
+  });
+  const factHours = factBreakdown.reduce((sum, row) => sum + row.hours, 0);
 
-  const semanticHours = Array.from(document.querySelectorAll('.semantic-row')).reduce((sum, row) => {
-    const count = rowNum(row, '.semantic-count');
-    const complexity = rowNum(row, '.semantic-complexity', 1);
-    return sum + count * hrsPerSemanticModel * complexity;
-  }, 0);
-
-  const reportHours = Array.from(document.querySelectorAll('.report-row')).reduce((sum, row) => {
-    const count = rowNum(row, '.report-count');
-    const tabs = Math.max(1, rowNum(row, '.report-tabs', 1));
-    const complexity = rowNum(row, '.report-complexity', 1);
-    const tabMultiplier = 1 + Math.max(0, tabs - 1) * tabImpactPct;
-    return sum + count * hrsPerReport * complexity * tabMultiplier;
-  }, 0);
-  const semanticBreakdown = Array.from(document.querySelectorAll('.semantic-row')).map((row, index) => {
+  const semanticRows = Array.from(document.querySelectorAll('.semantic-row'));
+  const semanticBreakdown = semanticRows.map((row, index) => {
     const count = rowNum(row, '.semantic-count');
     const complexity = rowNum(row, '.semantic-complexity', 1);
     return {
       layer: 'Semantic Model',
-      item: `Semantic group ${index + 1}`,
+      item: `Semantic group ${index + 1} (${formatCount(count)} model(s) × ${formatNum(hrsPerSemanticModel)} hrs/model × ${formatNum(complexity)} complexity)`,
       hours: count * hrsPerSemanticModel * complexity,
     };
   });
-  const reportBreakdown = Array.from(document.querySelectorAll('.report-row')).map((row, index) => {
+  const semanticHours = semanticBreakdown.reduce((sum, row) => sum + row.hours, 0);
+
+  const reportRows = Array.from(document.querySelectorAll('.report-row'));
+  const reportBreakdown = reportRows.map((row, index) => {
     const count = rowNum(row, '.report-count');
     const tabs = Math.max(1, rowNum(row, '.report-tabs', 1));
     const complexity = rowNum(row, '.report-complexity', 1);
     const tabMultiplier = 1 + Math.max(0, tabs - 1) * tabImpactPct;
     return {
       layer: 'Power BI Reports',
-      item: `Report group ${index + 1} (${count} report(s), ${tabs} tab(s))`,
+      item: `Report group ${index + 1} (${formatCount(count)} report(s), ${formatCount(tabs)} tab(s), ${formatNum(hrsPerReport)} hrs/report, ${formatNum(complexity)} complexity, ${formatNum(tabMultiplier)} tab multiplier)`,
       hours: count * hrsPerReport * complexity * tabMultiplier,
     };
   });
-
+  const reportHours = reportBreakdown.reduce((sum, row) => sum + row.hours, 0);
   const goldHours = dimensionHours + factHours + semanticHours + reportHours;
   const baseHours = ingestionHours + transformationHours + goldHours;
   const contingencyHours = baseHours * 0.15;
@@ -320,10 +327,45 @@ function calculateEstimate() {
   setText('summaryPrgHours', getNum('prgHours'));
   setText('summaryAdditionalHours', getWorkPackageHoursTotal());
   setText('summaryTotalHours', getNum('prgHours') + getWorkPackageHoursTotal());
+  const adjustmentBreakdown = [
+    {
+      layer: 'Risk/Contingency',
+      item: `15.0% of base implementation hours (${formatNum(baseHours)})`,
+      hours: contingencyHours,
+    },
+    {
+      layer: 'Documentation',
+      item: `${formatNum(documentationPct * 100)}% of base implementation hours (${formatNum(baseHours)})`,
+      hours: documentationHours,
+    },
+    {
+      layer: 'UAT',
+      item: `${formatNum(uatPct * 100)}% of base implementation hours (${formatNum(baseHours)})`,
+      hours: uatHours,
+    },
+  ];
+  const workPackageBreakdown = Array.from(document.querySelectorAll('.workpackage-row')).map((row, index) => {
+    const name = row.querySelector('.wp-name')?.value?.trim() || `Task/phase ${index + 1}`;
+    const description = row.querySelector('.wp-description')?.value?.trim();
+    const owner = row.querySelector('.wp-owner')?.value?.trim();
+    const detailParts = [description, owner ? `Owner: ${owner}` : ''].filter(Boolean);
+    return {
+      layer: 'Additional Task/Phase',
+      item: detailParts.length ? `${name} (${detailParts.join('; ')})` : name,
+      hours: rowNum(row, '.wp-hours'),
+    };
+  });
   renderProjectSummaryBreakdown(
-    [...ingestionBreakdown, ...transformationBreakdown, ...semanticBreakdown, ...reportBreakdown],
-    totalHours,
-    additionalHours,
+    [
+      ...ingestionBreakdown,
+      ...transformationBreakdown,
+      ...dimensionBreakdown,
+      ...factBreakdown,
+      ...semanticBreakdown,
+      ...reportBreakdown,
+      ...adjustmentBreakdown,
+      ...workPackageBreakdown,
+    ],
     projectTotalHours,
   );
 
