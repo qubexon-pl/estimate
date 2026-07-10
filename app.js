@@ -109,6 +109,17 @@ function addSemanticRow() {
   });
 }
 
+function addKpiRow() {
+  addRow('kpiRows', {
+    className: 'table-row table-row-with-delete-2 kpi-row',
+    html: `
+      <input class="form-control kpi-count" type="number" min="0" value="0" />
+      <select class="form-select kpi-complexity">${complexityOptions('1.5')}</select>
+      <button class="btn icon-only-btn row-delete-btn" type="button" aria-label="Delete KPI row">🗑</button>
+    `,
+  });
+}
+
 function addReportRow() {
   addRow('reportRows', {
     className: 'table-row table-row-with-delete-3 report-row',
@@ -142,13 +153,14 @@ function addWorkPackageRow(data = {}) {
 function generateAssumptions(payload, totalHours) {
   const ingestionSources = payload.ingestion.sources.length;
   const transformSources = payload.transformation.sources.length;
+  const totalKpis = payload.gold.kpis.reduce((s,r)=>s+(Number(r.count)||0),0);
   const totalReports = payload.gold.reports.reduce((s,r)=>s+(Number(r.count)||0),0);
   const totalTabs = payload.gold.reports.reduce((s,r)=>s+(Number(r.tabs)||0),0);
   const wpCount = payload.workPackages.length;
   return [
     'Scope overview:',
     `• Estimate covers ${ingestionSources} ingestion source(s) and ${transformSources} transformation source stream(s).`,
-    `• Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension group(s), ${payload.gold.facts.length} fact group(s), ${payload.gold.semanticModels.length} semantic model group(s), ${totalReports} report(s), and ${totalTabs} tab(s).`,
+    `• Semantic/reporting scope includes ${payload.gold.dimensions.length} dimension group(s), ${payload.gold.facts.length} fact group(s), ${payload.gold.semanticModels.length} semantic model group(s), ${totalKpis} KPI/DAX measure(s), ${totalReports} report(s), and ${totalTabs} tab(s).`,
     `• Additional task/phase plan contains ${wpCount} item(s) aligned to the delivery model.`,
     '',
     'Effort summary:',
@@ -194,9 +206,11 @@ function calculateEstimate() {
   const hrsPerDimension = getNum('hrsPerDimension');
   const hrsPerFact = getNum('hrsPerFact');
   const hrsPerSemanticModel = getNum('hrsPerSemanticModel');
+  const hrsPerKpi = getNum('hrsPerKpi');
   const hrsPerReport = getNum('hrsPerReport');
   const tabImpactPct = getNum('tabImpactPct') / 100;
   const documentationPct = getNum('documentationPct') / 100;
+  const contingencyPct = getNum('contingencyPct') / 100;
   const uatPct = getNum('uatPct') / 100;
 
   const ingestionRows = Array.from(document.querySelectorAll('.ingestion-row'));
@@ -279,6 +293,18 @@ function calculateEstimate() {
   });
   const semanticHours = semanticBreakdown.reduce((sum, row) => sum + row.hours, 0);
 
+  const kpiRows = Array.from(document.querySelectorAll('.kpi-row'));
+  const kpiBreakdown = kpiRows.map((row, index) => {
+    const count = rowNum(row, '.kpi-count');
+    const complexity = rowNum(row, '.kpi-complexity', 1);
+    return {
+      layer: 'Semantic Model - KPIs',
+      item: `KPI group ${index + 1} (${formatCount(count)} KPI/DAX measure(s) × ${formatNum(hrsPerKpi)} hrs/measure × ${formatNum(complexity)} complexity)`,
+      hours: count * hrsPerKpi * complexity,
+    };
+  });
+  const kpiHours = kpiBreakdown.reduce((sum, row) => sum + row.hours, 0);
+
   const reportRows = Array.from(document.querySelectorAll('.report-row'));
   const reportBreakdown = reportRows.map((row, index) => {
     const count = rowNum(row, '.report-count');
@@ -292,9 +318,9 @@ function calculateEstimate() {
     };
   });
   const reportHours = reportBreakdown.reduce((sum, row) => sum + row.hours, 0);
-  const goldHours = dimensionHours + factHours + semanticHours + reportHours;
+  const goldHours = dimensionHours + factHours + semanticHours + kpiHours + reportHours;
   const baseHours = ingestionHours + transformationHours + goldHours;
-  const contingencyHours = baseHours * 0.15;
+  const contingencyHours = baseHours * contingencyPct;
   const documentationHours = baseHours * documentationPct;
   const uatHours = baseHours * uatPct;
   const totalHours = baseHours + contingencyHours + documentationHours + uatHours;
@@ -317,6 +343,7 @@ function calculateEstimate() {
   setText('dimensionHours', dimensionHours);
   setText('factHours', factHours);
   setText('semanticHours', semanticHours);
+  setText('kpiHours', kpiHours);
   setText('goldHours', goldHours);
   setText('baseHours', baseHours);
   setText('contingencyHours', contingencyHours);
@@ -330,7 +357,7 @@ function calculateEstimate() {
   const adjustmentBreakdown = [
     {
       layer: 'Risk/Contingency',
-      item: `15.0% of base implementation hours (${formatNum(baseHours)})`,
+      item: `${formatNum(contingencyPct * 100)}% of base implementation hours (${formatNum(baseHours)})`,
       hours: contingencyHours,
     },
     {
@@ -362,6 +389,7 @@ function calculateEstimate() {
       ...dimensionBreakdown,
       ...factBreakdown,
       ...semanticBreakdown,
+      ...kpiBreakdown,
       ...reportBreakdown,
       ...adjustmentBreakdown,
       ...workPackageBreakdown,
@@ -382,9 +410,11 @@ function buildJsonPayload() {
       hrsPerDimension: getNum('hrsPerDimension'),
       hrsPerFact: getNum('hrsPerFact'),
       hrsPerSemanticModel: getNum('hrsPerSemanticModel'),
+      hrsPerKpi: getNum('hrsPerKpi'),
       hrsPerReport: getNum('hrsPerReport'),
       tabImpactPct: getNum('tabImpactPct'),
       documentationPct: getNum('documentationPct'),
+      contingencyPct: getNum('contingencyPct'),
       uatPct: getNum('uatPct'),
     },
     ingestion: {
@@ -414,6 +444,10 @@ function buildJsonPayload() {
       semanticModels: Array.from(document.querySelectorAll('.semantic-row')).map((row) => ({
         count: rowNum(row, '.semantic-count'),
         complexity: rowNum(row, '.semantic-complexity', 1.5),
+      })),
+      kpis: Array.from(document.querySelectorAll('.kpi-row')).map((row) => ({
+        count: rowNum(row, '.kpi-count'),
+        complexity: rowNum(row, '.kpi-complexity', 1.5),
       })),
       reports: Array.from(document.querySelectorAll('.report-row')).map((row) => ({
         count: rowNum(row, '.report-count'),
@@ -454,6 +488,7 @@ function applyJsonToForm(payload) {
   const dimensionRows = Array.isArray(payload.gold?.dimensions) ? payload.gold.dimensions : [];
   const factRows = Array.isArray(payload.gold?.facts) ? payload.gold.facts : [];
   const semanticRows = Array.isArray(payload.gold?.semanticModels) ? payload.gold.semanticModels : [];
+  const kpiRows = Array.isArray(payload.gold?.kpis) ? payload.gold.kpis : [];
   const reportRows = Array.isArray(payload.gold?.reports) ? payload.gold.reports : [];
   const workPackageRows = Array.isArray(payload.workPackages) ? payload.workPackages : [];
 
@@ -462,6 +497,7 @@ function applyJsonToForm(payload) {
   getElement('dimensionRows').innerHTML = '';
   getElement('factRows').innerHTML = '';
   getElement('semanticRows').innerHTML = '';
+  getElement('kpiRows').innerHTML = '';
   getElement('reportRows').innerHTML = '';
   getElement('workPackageRows').innerHTML = '';
 
@@ -506,6 +542,14 @@ function applyJsonToForm(payload) {
     current.querySelector('.semantic-complexity').value = String(row.complexity || 1.5);
   });
 
+  kpiRows.forEach((row) => {
+    addKpiRow();
+    const current = document.querySelector('#kpiRows .kpi-row:last-child');
+    if (!current) return;
+    current.querySelector('.kpi-count').value = row.count || 0;
+    current.querySelector('.kpi-complexity').value = String(row.complexity || 1.5);
+  });
+
   reportRows.forEach((row) => {
     addReportRow();
     const current = document.querySelector('#reportRows .report-row:last-child');
@@ -525,9 +569,11 @@ function applyJsonToForm(payload) {
       'hrsPerDimension',
       'hrsPerFact',
       'hrsPerSemanticModel',
+      'hrsPerKpi',
       'hrsPerReport',
       'tabImpactPct',
       'documentationPct',
+      'contingencyPct',
       'uatPct',
     ];
     calibrationFields.forEach((field) => {
@@ -541,7 +587,7 @@ function applyJsonToForm(payload) {
   getElement('transformAssumptions').value = payload.assumptions?.transformation || '';
   getElement('goldAssumptions').value = payload.assumptions?.gold || '';
 
-  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + semanticRows.length + reportRows.length + workPackageRows.length;
+  const rowsLoaded = ingestionRows.length + transformRows.length + dimensionRows.length + factRows.length + semanticRows.length + kpiRows.length + reportRows.length + workPackageRows.length;
   getElement('uploadStatus').textContent = `Loaded JSON successfully. Added ${rowsLoaded} row(s).`;
   calculateEstimate();
 }
@@ -617,6 +663,11 @@ function initEstimator() {
     calculateEstimate();
   });
 
+  getElement('addKpiBtn').addEventListener('click', () => {
+    addKpiRow();
+    calculateEstimate();
+  });
+
   getElement('addReportBtn').addEventListener('click', () => {
     addReportRow();
     calculateEstimate();
@@ -642,6 +693,7 @@ function initEstimator() {
   addDimensionRow();
   addFactRow();
   addSemanticRow();
+  addKpiRow();
   addReportRow();
   calculateEstimate();
 }
