@@ -42,9 +42,10 @@
                 <p>Dimension hours: <strong id="dimensionHours">0.0</strong></p>
                 <p>Fact hours: <strong id="factHours">0.0</strong></p>
                 <p>Semantic model hours: <strong id="semanticHours">0.0</strong></p>
+                <p>KPI/DAX measure hours: <strong id="kpiHours">0.0</strong></p>
                 <p>Gold/BI hours: <strong id="goldHours">0.0</strong></p>
                 <p>Base implementation hours: <strong id="baseHours">0.0</strong></p>
-                <p>Risk/contingency (15%): <strong id="contingencyHours">0.0</strong></p>
+                <p>Risk/contingency: <strong id="contingencyHours">0.0</strong></p>
                 <p>Documentation hours: <strong id="documentationHours">0.0</strong></p>
                 <p>UAT hours: <strong id="uatHours">0.0</strong></p>
                 <p class="text-info fw-semibold mb-0">Total PRG hours: <strong id="totalHours">0.0</strong></p>
@@ -69,9 +70,11 @@
                 <label class="col-12 col-md-6">Hours / dimension object<input class="form-control" id="hrsPerDimension" type="number" min="0" step="0.1" value="3" /></label>
                 <label class="col-12 col-md-6">Hours / fact object<input class="form-control" id="hrsPerFact" type="number" min="0" step="0.1" value="5" /></label>
                 <label class="col-12 col-md-6">Hours / semantic model<input class="form-control" id="hrsPerSemanticModel" type="number" min="0" step="0.1" value="18" /></label>
+                <label class="col-12 col-md-6">Hours / DAX measure<input class="form-control" id="hrsPerKpi" type="number" min="0" step="0.1" value="2" /></label>
                 <label class="col-12 col-md-6">Hours / report<input class="form-control" id="hrsPerReport" type="number" min="0" step="0.1" value="8" /></label>
                 <label class="col-12 col-md-6">Per extra report tab (% impact)<input class="form-control" id="tabImpactPct" type="number" min="0" step="0.1" value="15" /></label>
                 <label class="col-12 col-md-6">Documentation (%)<input class="form-control" id="documentationPct" type="number" min="0" step="0.1" value="10" /></label>
+                <label class="col-12 col-md-6">Risk/contingency (%)<input class="form-control" id="contingencyPct" type="number" min="0" step="0.1" value="15" /></label>
                 <label class="col-12 col-md-6">UAT (%)<input class="form-control" id="uatPct" type="number" min="0" step="0.1" value="10" /></label>
               </div>
             </div>
@@ -152,6 +155,9 @@
                     <button id="addSemanticBtn" class="btn btn-outline-info" type="button">Add semantic models</button>
                   </div>
                   <div class="action-stack">
+                    <button id="addKpiBtn" class="btn btn-outline-info" type="button">Add KPIs</button>
+                  </div>
+                  <div class="action-stack">
                     <button id="addReportBtn" class="btn btn-outline-info" type="button">Add reports</button>
                   </div>
                 </div>
@@ -180,6 +186,14 @@
                   <span>Logic complexity</span>
                 </div>
                 <div id="semanticRows" class="table-body"></div>
+              </div>
+
+              <div class="table-wrap">
+                <div class="table-head row-2">
+                  <span>Number of KPIs / DAX measures</span>
+                  <span>DAX complexity</span>
+                </div>
+                <div id="kpiRows" class="table-body"></div>
               </div>
 
               <div class="table-wrap mb-3">
